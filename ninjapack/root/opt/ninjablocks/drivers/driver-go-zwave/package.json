@@ -1,0 +1,13 @@
+{
+  "name": "driver-zwave",
+  "version": "0.1.0",
+  "description": "Ninja Sphere - Zwave Driver",
+  "main": "driver-go-zwave",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jon Seymour <jon@ninjablocks.com>",
+  "license": "MIT",
+  "topics": {},
+  "maxMemory": 10
+}
