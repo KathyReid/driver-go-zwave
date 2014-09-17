@@ -30,7 +30,7 @@ func main() {
 		log.HandleError(err, "Could not get driver bus")
 	}
 
-	log.Infof("bus -> %v", bus);
+	log.Infof("bus -> %v", bus)
 
 	statusJob, err := ninja.CreateStatusJob(conn, driverName)
 
@@ -45,19 +45,30 @@ func main() {
 		log.HandleError(err, "Could not get net address")
 	}
 
-	log.Infof("ipAddr -> %v", ipAddr);
+	log.Infof("ipAddr -> %v", ipAddr)
+
+	var notifications chan *interface{} = make(chan *interface{})
+
+	go func() {
+
+		for {
+			notification := <-notifications
+			_ = notification
+		}
+	}()
 
 	openzwave.
 		NewAPI().
 		CreateOptions("/usr/local/etc/openzwave", "").
-		AddIntOption( "SaveLogLevel", openzwave.LogLevel_Detail ).
-		AddIntOption( "QueueLogLevel", openzwave.LogLevel_Debug ).
-		AddIntOption( "DumpTrigger", openzwave.LogLevel_Error ).
-		AddIntOption( "PollInterval", 500).
-		AddBoolOption( "IntervalBetweenPolls", true ).
+		AddIntOption("SaveLogLevel", openzwave.LogLevel_Detail).
+		AddIntOption("QueueLogLevel", openzwave.LogLevel_Debug).
+		AddIntOption("DumpTrigger", openzwave.LogLevel_Error).
+		AddIntOption("PollInterval", 500).
+		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
 		LockOptions().
-		AddDriver("/dev/ttyUSB0");
+		AddWatcher(notifications).
+		AddDriver("/dev/ttyUSB0")
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
