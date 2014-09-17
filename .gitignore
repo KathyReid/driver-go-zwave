@@ -1,3 +1,4 @@
 .gopath/
 ninjapack/root/usr/lib/libopenzwave.so.1.0
 ninjapack/root/usr/local/etc/openzwave
+bin/

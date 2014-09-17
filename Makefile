@@ -1,10 +1,15 @@
-all: install
+all: build
+
+here:
+	go install
 
 clean:
 	go clean -i
+	rm -rf bin || true
+	rm -rf .gopath || true
 
-install: deps
-	go install
+build:
+	scripts/build.sh
 
 #
 # A raw go build will not build the required dependency, so
