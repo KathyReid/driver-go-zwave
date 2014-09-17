@@ -47,7 +47,17 @@ func main() {
 
 	log.Infof("ipAddr -> %v", ipAddr);
 
-	_ = openzwave.NewAPI("/dev/ttyUSB0");
+	openzwave.
+		NewAPI().
+		CreateOptions("/usr/local/etc/openzwave", "").
+		AddIntOption( "SaveLogLevel", openzwave.LogLevel_Detail ).
+		AddIntOption( "QueueLogLevel", openzwave.LogLevel_Debug ).
+		AddIntOption( "DumpTrigger", openzwave.LogLevel_Error ).
+		AddIntOption( "PollInterval", 500).
+		AddBoolOption( "IntervalBetweenPolls", true ).
+		AddBoolOption("ValidateValueChanges", true).
+		LockOptions().
+		AddDriver("/dev/ttyUSB0");
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
