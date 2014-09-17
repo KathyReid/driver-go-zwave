@@ -1,8 +1,7 @@
 all: install
 
 clean:
-	rm -f bin/* || true
-	rm -rf .gopath || true
+	go clean -i
 
 install: deps
 	go install
@@ -12,6 +11,7 @@ install: deps
 # we use make to achieve this.
 #
 deps:
+	go get github.com/ninjasphere/go-openzwave 
 	cd ../go-openzwave && make	
 	mkdir -p ninjapack/root/usr/lib
 	cp ../go-openzwave/openzwave/libopenzwave.so.1.0 ninjapack/root/usr/lib 
