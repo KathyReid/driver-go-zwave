@@ -1,6 +1,7 @@
 all: build
 
-here:
+# a rule that does the build in place here with whatever happens to be adjacent
+here: deps
 	go install
 
 clean:
@@ -8,6 +9,7 @@ clean:
 	rm -rf bin || true
 	rm -rf .gopath || true
 
+# does a clean build of all dependencies from git hub
 build:
 	scripts/build.sh
 
