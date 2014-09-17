@@ -47,7 +47,7 @@ func main() {
 
 	log.Infof("ipAddr -> %v", ipAddr);
 
-	_ = openzwave.NewOpenZWaveAPI();
+	_ = openzwave.NewAPI("/dev/ttyUSB0");
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
