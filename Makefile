@@ -12,7 +12,7 @@ install: deps
 #
 deps:
 	go get github.com/ninjasphere/go-openzwave 
-	cd ../go-openzwave && make	
+	cd ../go-openzwave && make deps
 	mkdir -p ninjapack/root/usr/lib
 	cp ../go-openzwave/openzwave/libopenzwave.so.1.0 ninjapack/root/usr/lib 
 	mkdir -p ninjapack/root/usr/local/etc/openzwave/
