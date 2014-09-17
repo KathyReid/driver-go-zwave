@@ -12,7 +12,8 @@ install: deps
 # we use make to achieve this.
 #
 deps:
-	cd ../go-openzwave && make
+	cd ../go-openzwave && make	
+	cp ../go-openzwave/openzwave/libopenzwave.so.1.0 ninjapack/root/usr/lib
 
 test: install
 	go test -v ./...
