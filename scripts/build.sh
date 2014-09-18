@@ -37,6 +37,6 @@ fi
 # move the working path and build
 cd .gopath/src/github.com/${OWNER}/${PROJECT_NAME} &&
 go get -d -v ./... &&
-make deps &&
-go build -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY} -L ${GOPATH}/src/github.com/${OWNER}/go-openzwave/openzwave" -o ${BIN_NAME} &&
+make deps GOPATH=${GOPATH} &&
+go build -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY} -extldflags -L${GOPATH}/src/github.com/${OWNER}/go-openzwave/openzwave" -o ${BIN_NAME} &&
 mv ${BIN_NAME} ./bin
