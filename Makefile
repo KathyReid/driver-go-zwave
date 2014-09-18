@@ -8,7 +8,7 @@ here: deps
 
 clean:
 	go clean -i
-	rm -rf bin || true
+	rm -rf bin/* || true
 	rm -rf .gopath || true
 
 # does a clean build of all dependencies from git hub
