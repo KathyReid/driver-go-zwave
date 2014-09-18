@@ -46,7 +46,7 @@ func main() {
 	_ = bus
 	_ = ipAddr
 
-	var notifications chan *interface{} = make(chan *interface{})
+	var notifications chan openzwave.Notification = make(chan openzwave.Notification)
 
 	openzwave.
 		NewAPI().
@@ -65,13 +65,13 @@ func main() {
 	signal.Notify(signals, os.Interrupt, os.Kill)
 
 	for {
-	    select {
+		select {
 		case notification := <-notifications:
-		     _ = notification;
-		case signal := <- signals:
-		     fmt.Println("Received signal: ", signal);
-		     os.Exit(1);
-		     break;
-	    }
+			_ = notification
+		case signal := <-signals:
+			fmt.Println("Received signal: ", signal)
+			os.Exit(1)
+			break
+		}
 	}
 }
