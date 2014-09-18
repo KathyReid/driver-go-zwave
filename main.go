@@ -48,14 +48,6 @@ func main() {
 
 	var notifications chan *interface{} = make(chan *interface{})
 
-	go func() {
-
-		for {
-			notification := <-notifications
-			_ = notification
-		}
-	}()
-
 	openzwave.
 		NewAPI().
 		CreateOptions("/usr/local/etc/openzwave", "").
@@ -69,11 +61,17 @@ func main() {
 		AddWatcher(notifications).
 		AddDriver("/dev/ttyUSB0")
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, os.Kill)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, os.Kill)
 
-	// Block until a signal is received.
-	s := <-c
-	fmt.Println("Got signal:", s)
-
+	for {
+	    select {
+		case notification := <-notifications:
+		     _ = notification;
+		case signal := <- signals:
+		     fmt.Println("Received signal: ", signal);
+		     os.Exit(1);
+		     break;
+	    }
+	}
 }
