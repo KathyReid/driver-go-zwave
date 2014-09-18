@@ -20,32 +20,31 @@ func main() {
 
 	conn, err := ninja.Connect("com.ninjablocks.zwave")
 	if err != nil {
-		log.HandleError(err, "Could not connect to MQTT")
+		log.FatalError(err, "Could not connect to MQTT")
 	}
 
 	pwd, _ := os.Getwd()
 
 	bus, err := conn.AnnounceDriver("com.ninjablocks.zwave", driverName, pwd)
 	if err != nil {
-		log.HandleError(err, "Could not get driver bus")
+		log.FatalError(err, "Could not get driver bus")
 	}
-
-	log.Infof("bus -> %v", bus)
 
 	statusJob, err := ninja.CreateStatusJob(conn, driverName)
 
 	if err != nil {
-		log.HandleError(err, "Could not setup status job")
+		log.FatalError(err, "Could not setup status job")
 	}
 
 	statusJob.Start()
 
 	ipAddr, err := ninja.GetNetAddress()
 	if err != nil {
-		log.HandleError(err, "Could not get net address")
+		log.FatalError(err, "Could not get net address")
 	}
 
-	log.Infof("ipAddr -> %v", ipAddr)
+	_ = bus
+	_ = ipAddr
 
 	var notifications chan *interface{} = make(chan *interface{})
 
