@@ -32,7 +32,7 @@ fi
 if [ ! -d $GOPATH/src/github.com/ninjasphere/go-openzwave ]; then
 	git clone git@github.com:ninjasphere/go-openzwave.git $GOPATH/src/github.com/ninjasphere/go-openzwave
 fi
-
+( cd $GOPATH/src/github.com/ninjasphere/go-openzwave; make deps )
 
 # move the working path and build
 cd .gopath/src/github.com/${OWNER}/${PROJECT_NAME} &&
