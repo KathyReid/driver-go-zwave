@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"os/signal"
 
 	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-ninja/logger"
@@ -49,8 +47,16 @@ func main() {
 
 	var notifications chan openzwave.Notification = make(chan openzwave.Notification)
 
-	openzwave.
-		NewAPI().
+	go func() {
+		for {
+		    var notification openzwave.Notification;
+		    notifications <- notification;
+		    _ = notification
+		}
+	} ()
+
+	os.Exit(openzwave.
+		API().
 		StartOptions("/usr/local/etc/openzwave", "").
 		AddIntOption("SaveLogLevel", LOG_LEVEL.DETAIL).
 		AddIntOption("QueueLogLevel", LOG_LEVEL.DEBUG).
@@ -61,19 +67,7 @@ func main() {
 		EndOptions().
 		CreateManager().
 		SetNotificationChannel(notifications).
-		StartDriver("")
+		StartDriver("").
+		Run());
 
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, os.Kill)
-
-	for {
-		select {
-		case notification := <-notifications:
-			_ = notification
-		case signal := <-signals:
-			fmt.Println("Received signal: ", signal)
-			os.Exit(1)
-			break
-		}
-	}
 }
