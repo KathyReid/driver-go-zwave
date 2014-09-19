@@ -61,7 +61,7 @@ func main() {
 		EndOptions().
 		CreateManager().
 		SetNotificationChannel(notifications).
-		AddDriver("/dev/ttyUSB0")
+		StartDriver("")
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, os.Kill)
