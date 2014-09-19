@@ -8,6 +8,7 @@ import (
 	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-ninja/logger"
 	"github.com/ninjasphere/go-openzwave"
+	"github.com/ninjasphere/go-openzwave/LOG_LEVEL"
 )
 
 const driverName = "driver-zwave"
@@ -51,9 +52,9 @@ func main() {
 	openzwave.
 		NewAPI().
 		StartOptions("/usr/local/etc/openzwave", "").
-		AddIntOption("SaveLogLevel", openzwave.LogLevel_Detail).
-		AddIntOption("QueueLogLevel", openzwave.LogLevel_Debug).
-		AddIntOption("DumpTrigger", openzwave.LogLevel_Error).
+		AddIntOption("SaveLogLevel", LOG_LEVEL.DETAIL).
+		AddIntOption("QueueLogLevel", LOG_LEVEL.DEBUG).
+		AddIntOption("DumpTrigger", LOG_LEVEL.ERROR).
 		AddIntOption("PollInterval", 500).
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
