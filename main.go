@@ -50,14 +50,15 @@ func main() {
 
 	openzwave.
 		NewAPI().
-		CreateOptions("/usr/local/etc/openzwave", "").
+		StartOptions("/usr/local/etc/openzwave", "").
 		AddIntOption("SaveLogLevel", openzwave.LogLevel_Detail).
 		AddIntOption("QueueLogLevel", openzwave.LogLevel_Debug).
 		AddIntOption("DumpTrigger", openzwave.LogLevel_Error).
 		AddIntOption("PollInterval", 500).
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
-		LockOptions().
+		EndOptions().
+		CreateManager().
 		AddWatcher(notifications).
 		AddDriver("/dev/ttyUSB0")
 
