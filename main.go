@@ -54,15 +54,13 @@ func main() {
 	}
 
 	os.Exit(openzwave.
-		API().
-		StartOptions("/usr/local/etc/openzwave", "").
+		API("/usr/local/etc/openzwave", "", "").
 		AddIntOption("SaveLogLevel", LOG_LEVEL.DETAIL).
 		AddIntOption("QueueLogLevel", LOG_LEVEL.DEBUG).
 		AddIntOption("DumpTrigger", LOG_LEVEL.ERROR).
 		AddIntOption("PollInterval", 500).
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
-		StartDriver("").
 		Run(loop));
 
 }
