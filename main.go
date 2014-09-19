@@ -60,7 +60,7 @@ func main() {
 		AddBoolOption("ValidateValueChanges", true).
 		EndOptions().
 		CreateManager().
-		AddWatcher(notifications).
+		SetNotificationChannel(notifications).
 		AddDriver("/dev/ttyUSB0")
 
 	signals := make(chan os.Signal, 1)
