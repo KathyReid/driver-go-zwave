@@ -45,15 +45,13 @@ func main() {
 	_ = bus
 	_ = ipAddr
 
-	var notifications chan openzwave.Notification = make(chan openzwave.Notification)
-
-	go func() {
+	loop := func(notifications chan openzwave.Notification) {
 		for {
 		    var notification openzwave.Notification;
 		    notifications <- notification;
 		    _ = notification
 		}
-	} ()
+	}
 
 	os.Exit(openzwave.
 		API().
@@ -64,10 +62,7 @@ func main() {
 		AddIntOption("PollInterval", 500).
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
-		EndOptions().
-		CreateManager().
-		SetNotificationChannel(notifications).
 		StartDriver("").
-		Run());
+		Run(loop));
 
 }
