@@ -1,12 +1,13 @@
 package main
 
 import (
-	"os"
+       "fmt"
+       "os"
 
-	"github.com/ninjasphere/go-ninja"
-	"github.com/ninjasphere/go-ninja/logger"
-	"github.com/ninjasphere/go-openzwave"
-	"github.com/ninjasphere/go-openzwave/LOG_LEVEL"
+       "github.com/ninjasphere/go-ninja"
+       "github.com/ninjasphere/go-ninja/logger"
+       "github.com/ninjasphere/go-openzwave"
+       "github.com/ninjasphere/go-openzwave/LOG_LEVEL"
 )
 
 const driverName = "driver-zwave"
@@ -45,11 +46,15 @@ func main() {
 	_ = bus
 	_ = ipAddr
 
-	loop := func(notifications chan openzwave.Notification) {
+	loop := func(notifications chan openzwave.Notification, quit chan bool) {
 		for {
-		    var notification openzwave.Notification;
-		    notifications <- notification;
-		    _ = notification
+		    select {
+		    	case notification := <- notifications:
+				_ = notification
+			case quitReceived := <- quit:
+			     _ = quitReceived; // TODO: something useful
+			     fmt.Printf("TODO: quit received\n");
+		    }
 		}
 	}
 
