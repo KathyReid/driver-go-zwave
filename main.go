@@ -1,7 +1,6 @@
 package main
 
 import (
-       "fmt"
        "os"
 
        "github.com/ninjasphere/go-ninja"
@@ -46,20 +45,20 @@ func main() {
 	_ = bus
 	_ = ipAddr
 
-	loop := func(notifications chan openzwave.Notification, quit chan bool) {
+	loop := func(api openzwave.API) {
 		for {
 		    select {
-		    	case notification := <- notifications:
-				_ = notification
-			case quitReceived := <- quit:
-			     _ = quitReceived; // TODO: something useful
-			     fmt.Printf("TODO: quit received\n");
+		    	case notification := <- api.Notifications():
+			     _ = notification
+			case quitReceived := <- api.QuitSignal():
+			     _ = quitReceived
+			     return;
 		    }
 		}
 	}
 
 	os.Exit(openzwave.
-		API("/usr/local/etc/openzwave", "", "").
+		BuildAPI("/usr/local/etc/openzwave", "", "").
 		AddIntOption("SaveLogLevel", LOG_LEVEL.DETAIL).
 		AddIntOption("QueueLogLevel", LOG_LEVEL.DEBUG).
 		AddIntOption("DumpTrigger", LOG_LEVEL.ERROR).
