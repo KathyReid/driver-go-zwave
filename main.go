@@ -49,7 +49,7 @@ func main() {
 		for {
 		    select {
 		    	case notification := <- api.Notifications():
-			     _ = notification
+			     api.FreeNotification(notification);
 			case quitReceived := <- api.QuitSignal():
 			     _ = quitReceived
 			     return;
