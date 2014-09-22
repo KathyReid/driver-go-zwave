@@ -60,10 +60,10 @@ func main() {
 
 	os.Exit(openzwave.
 		BuildAPI("/usr/local/etc/openzwave", "", "").
-		AddIntOption("SaveLogLevel", LOG_LEVEL.DETAIL).
-		AddIntOption("QueueLogLevel", LOG_LEVEL.DEBUG).
-		AddIntOption("DumpTrigger", LOG_LEVEL.ERROR).
-		AddIntOption("PollInterval", 500).
+		AddIntOption("SaveLogLevel", LOG_LEVEL.NONE).
+		AddIntOption("QueueLogLevel", LOG_LEVEL.NONE).
+		AddIntOption("DumpTrigger", LOG_LEVEL.NONE).
+		AddIntOption("PollInterval", 60).
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
 		Run(loop));
