@@ -50,7 +50,7 @@ func main() {
 		    select {
 		    	case notification := <- api.Notifications():
 			     log.Infof("notification received <- %v\n", notification);
-			     api.FreeNotification(notification);
+			     notification.Free();
 			case quitReceived := <- api.QuitSignal():
 			     _ = quitReceived
 			     return;
