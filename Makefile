@@ -6,10 +6,13 @@ all: build
 here: deps
 	go install
 
-clean:
+clean:	clean-src
 	go clean -i
 	rm -rf bin/* || true
 	rm -rf .gopath || true
+
+clean-src:
+	find . -name '*~' -exec rm {} \;
 
 # does a clean build of all dependencies from git hub
 build:
