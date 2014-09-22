@@ -60,6 +60,7 @@ func main() {
 
 	os.Exit(openzwave.
 		BuildAPI("/usr/local/etc/openzwave", "", "").
+		SetLogger(log).
 		AddIntOption("SaveLogLevel", LOG_LEVEL.NONE).
 		AddIntOption("QueueLogLevel", LOG_LEVEL.NONE).
 		AddIntOption("DumpTrigger", LOG_LEVEL.NONE).
