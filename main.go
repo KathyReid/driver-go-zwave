@@ -63,7 +63,7 @@ func main() {
 		AddIntOption("SaveLogLevel", LOG_LEVEL.NONE).
 		AddIntOption("QueueLogLevel", LOG_LEVEL.NONE).
 		AddIntOption("DumpTrigger", LOG_LEVEL.NONE).
-		AddIntOption("PollInterval", 60).
+		AddIntOption("PollInterval", 360).	// a 6 minute interval
 		AddBoolOption("IntervalBetweenPolls", true).
 		AddBoolOption("ValidateValueChanges", true).
 		Run(loop));
