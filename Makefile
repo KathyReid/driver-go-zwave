@@ -3,8 +3,11 @@ GO_OPENZWAVE=github.com/ninjasphere/go-openzwave
 all: build
 
 # a rule that does the build in place here with whatever happens to be adjacent
-here: deps
+here: deps fmt
 	go install
+
+fmt:
+	gofmt -s -w *.go
 
 clean:	clean-src
 	go clean -i
