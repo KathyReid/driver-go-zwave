@@ -1,12 +1,12 @@
 package main
 
 import (
-       "os"
+	"os"
 
-       "github.com/ninjasphere/go-ninja"
-       "github.com/ninjasphere/go-ninja/logger"
-       "github.com/ninjasphere/go-openzwave"
-       "github.com/ninjasphere/go-openzwave/LOG_LEVEL"
+	"github.com/ninjasphere/go-ninja"
+	"github.com/ninjasphere/go-ninja/logger"
+	"github.com/ninjasphere/go-openzwave"
+	"github.com/ninjasphere/go-openzwave/LOG_LEVEL"
 )
 
 const driverName = "driver-zwave"
@@ -45,19 +45,6 @@ func main() {
 	_ = bus
 	_ = ipAddr
 
-	loop := func(api openzwave.API) {
-		for {
-		    select {
-		    	case notification := <- api.Notifications():
-			     api.Logger().Infof("notification received <- %v\n", notification);
-			     notification.Free();
-			case quitReceived := <- api.QuitSignal():
-			     _ = quitReceived
-			     return;
-		    }
-		}
-	}
-
 	os.Exit(openzwave.
 		BuildAPI("/usr/local/etc/openzwave", "", "").
 		SetLogger(log).
@@ -73,6 +60,6 @@ func main() {
 		AddIntOption("PollInterval", 30).
 		AddBoolOption("IntervalBetweenPolls", false).
 		AddBoolOption("ValidateValueChanges", true).
-		Run(loop));
+		Run())
 
 }
