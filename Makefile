@@ -7,7 +7,7 @@ here: deps fmt
 	go install
 
 fmt:
-	gofmt -s -w *.go
+	gofmt -s -w $$(find . -name "*.go")
 
 clean:	clean-src
 	go clean -i
