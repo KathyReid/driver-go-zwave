@@ -42,6 +42,21 @@ func main() {
 		log.FatalError(err, "Could not get net address")
 	}
 
+	zwaveEvents := func(api openzwave.API, event openzwave.Event) {
+		switch event.(type) {
+		case openzwave.NodeAvailable:
+			newDevice := buildDevice(event.GetNode())
+			event.GetNode().SetDevice(newDevice)
+			break
+		case openzwave.NodeChanged:
+			existingDevice := event.GetNode().GetDevice()
+			_ = existingDevice
+			break
+		case openzwave.NodeUnavailable:
+			// TODO
+		}
+	}
+
 	_ = bus
 	_ = ipAddr
 
@@ -60,6 +75,7 @@ func main() {
 		AddIntOption("PollInterval", 30).
 		AddBoolOption("IntervalBetweenPolls", false).
 		AddBoolOption("ValidateValueChanges", true).
+		SetEventsCallback(zwaveEvents).
 		Run())
 
 }
