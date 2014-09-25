@@ -14,7 +14,7 @@ type zwaveDevice struct {
 type DeviceFactory func(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error)
 
 var (
-	builders map[openzwave.ProductId]DeviceFactory
+	builders map[openzwave.ProductId]DeviceFactory = make(map[openzwave.ProductId]DeviceFactory)
 
 	AEON_MULTISENSOR = openzwave.ProductId{MF.AEON_LABS, "0005"}
 	AEON_ILLUMINATOR = openzwave.ProductId{MF.AEON_LABS, "000d"}
@@ -22,7 +22,6 @@ var (
 
 func buildDevice(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error) {
 	if len(builders) == 0 {
-		builders = make(map[openzwave.ProductId]DeviceFactory)
 		builders[AEON_MULTISENSOR] = aeon.MultiSensorFactory
 		builders[AEON_ILLUMINATOR] = aeon.IlluminatorFactory
 	}

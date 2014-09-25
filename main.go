@@ -44,18 +44,22 @@ func main() {
 
 	zwaveEvents := func(api openzwave.API, event openzwave.Event) {
 		switch event.(type) {
-		case openzwave.NodeAvailable:
+		case *openzwave.NodeAvailable:
+			log.Infof("device available %v", event.GetNode())
 			newDevice, err := buildDevice(bus, event.GetNode())
 			if err != nil {
+				log.Infof("error while creating device for node %v: %v", event.GetNode(), err)
 				//TODO: generate notification
+			} else {
+				log.Infof("device created for node %v", event.GetNode())
 			}
 			event.GetNode().SetDevice(newDevice)
 			break
-		case openzwave.NodeChanged:
+		case *openzwave.NodeChanged:
 			existingDevice := event.GetNode().GetDevice()
 			_ = existingDevice
 			break
-		case openzwave.NodeUnavailable:
+		case *openzwave.NodeUnavailable:
 			// TODO
 		}
 	}
