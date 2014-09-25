@@ -1,9 +1,10 @@
 package aeon
 
 import (
+	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-openzwave"
 )
 
-func MultiSensorFactory(node openzwave.Node) openzwave.Device {
-	return &struct{}{}
+func MultiSensorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error) {
+	return &struct{}{}, nil
 }

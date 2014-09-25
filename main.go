@@ -45,7 +45,10 @@ func main() {
 	zwaveEvents := func(api openzwave.API, event openzwave.Event) {
 		switch event.(type) {
 		case openzwave.NodeAvailable:
-			newDevice := buildDevice(event.GetNode())
+			newDevice, err := buildDevice(bus, event.GetNode())
+			if err != nil {
+				//TODO: generate notification
+			}
 			event.GetNode().SetDevice(newDevice)
 			break
 		case openzwave.NodeChanged:
