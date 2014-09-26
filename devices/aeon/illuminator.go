@@ -8,9 +8,17 @@ import (
 	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-ninja/devices"
 	"github.com/ninjasphere/go-openzwave"
+	"github.com/ninjasphere/go-openzwave/CC"
 )
 
+type illuminator struct {
+	node  openzwave.Node
+	light *devices.LightDevice
+}
+
 func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error) {
+
+	device := &illuminator{node, nil}
 
 	productId := node.GetProductId()
 	productDescription := node.GetProductDescription()
@@ -35,30 +43,38 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 		return nil, err
 	}
 
-	light, err := devices.CreateLightDevice(label, deviceBus)
+	device.light, err = devices.CreateLightDevice(label, deviceBus)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := light.EnableOnOffChannel(); err != nil {
+	if err := device.light.EnableOnOffChannel(); err != nil {
 		return nil, err
 	}
 
-	if err := light.EnableBrightnessChannel(); err != nil {
+	if err := device.light.EnableBrightnessChannel(); err != nil {
 		return nil, err
 	}
 
-	light.ApplyLightState = func(state *devices.LightDeviceState) error {
+	device.light.ApplyLightState = func(state *devices.LightDeviceState) error {
 		return nil
 	}
 
-	light.ApplyOnOff = func(state bool) error {
+	device.light.ApplyOnOff = func(state bool) error {
+		level := uint8(0)
+		if state {
+			level = 255
+		}
+		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
+			return nil
+		} else {
+			return fmt.Errorf("Failed to change state")
+		}
+	}
+
+	device.light.ApplyBrightness = func(state float64) error {
 		return nil
 	}
 
-	light.ApplyBrightness = func(state float64) error {
-		return nil
-	}
-
-	return &struct{}{}, nil
+	return device, nil
 }
