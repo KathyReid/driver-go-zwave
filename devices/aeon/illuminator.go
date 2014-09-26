@@ -74,10 +74,6 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 		return nil, err
 	}
 
-	device.light.ApplyLightState = func(state *devices.LightDeviceState) error {
-		return nil
-	}
-
 	device.light.ApplyOnOff = func(state bool) error {
 		level := uint8(0)
 		if state {
@@ -109,6 +105,12 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 			err = fmt.Errorf("Failed to read existing level from device")
 		}
 		return err
+	}
+
+	device.light.ApplyLightState = func(state *devices.LightDeviceState) error {
+		device.light.ApplyOnOff(*state.OnOff)
+		device.light.ApplyBrightness(*state.Brightness)
+		return nil
 	}
 
 	return device, nil
