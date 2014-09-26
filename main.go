@@ -62,9 +62,9 @@ func main() {
 			// TODO
 		}
 	}
-	
+
 	os.Exit(openzwave.
-		BuildAPI("/usr/local/etc/openzwave", "/opt/ninjablocks/drivers/driver-go-zwave", "").
+		BuildAPI("/usr/local/etc/openzwave", ".", "").
 		SetLogger(log).
 		SetEventsCallback(zwaveEvents).
 		Run())

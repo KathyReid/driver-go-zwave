@@ -11,6 +11,5 @@
   <Option name="QueueLogLevel" value="0" />
   <Option name="DumpTrigger" value="0" />
   <Option name="PollInterval" value="30" />
-  <Option name="SaveConfiguration" value="true" />
   <Option name="IntervalBetweenPolls" value="false" />
 </Options>
