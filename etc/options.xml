@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- To be effective, this file should be placed in the user data folder specified in the Options::Create method -->
+<Options xmlns='http://code.google.com/p/open-zwave/'>
+  <Option name="ValidateValueChanges" value="true" />
+  <Option name="SaveConfiguration" value="false" />
+  <Option name="logging" value="false" />
+  <Option name="LogFileName" value="/dev/null" />
+  <Option name="ConsoleOutput" value="false" />
+  <Option name="NotifyTransactions" value="true" />
+  <Option name="SaveLogLevel" value="0" />
+  <Option name="QueueLogLevel" value="0" />
+  <Option name="DumpTrigger" value="0" />
+  <Option name="PollInterval" value="30" />
+  <Option name="SaveConfiguration" value="true" />
+  <Option name="IntervalBetweenPolls" value="false" />
+</Options>
