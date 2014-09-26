@@ -6,7 +6,6 @@ import (
 	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-ninja/logger"
 	"github.com/ninjasphere/go-openzwave"
-	"github.com/ninjasphere/go-openzwave/LOG_LEVEL"
 )
 
 const driverName = "driver-zwave"
@@ -34,7 +33,6 @@ func main() {
 	if err != nil {
 		log.FatalError(err, "Could not setup status job")
 	}
-	_ = statusJob
 	// statusJob.Start()
 
 	ipAddr, err := ninja.GetNetAddress()
@@ -64,14 +62,15 @@ func main() {
 			// TODO
 		}
 	}
-
-	_ = bus
-	_ = ipAddr
-
+	
 	os.Exit(openzwave.
 		BuildAPI("/usr/local/etc/openzwave", "/opt/ninjablocks/drivers/driver-go-zwave", "").
 		SetLogger(log).
 		SetEventsCallback(zwaveEvents).
 		Run())
+
+	_ = bus
+	_ = ipAddr
+	_ = statusJob
 
 }
