@@ -69,20 +69,8 @@ func main() {
 	_ = ipAddr
 
 	os.Exit(openzwave.
-		BuildAPI("/usr/local/etc/openzwave", "", "").
+		BuildAPI("/usr/local/etc/openzwave", "/opt/ninjablocks/drivers/driver-go-zwave", "").
 		SetLogger(log).
-		AddBoolOption("ValidateValueChanges", true).
-		AddBoolOption("SaveConfiguration", false).
-		AddBoolOption("logging", false).
-		AddStringOption("LogFileName", "/dev/null", false).
-		AddBoolOption("ConsoleOutput", false).
-		AddBoolOption("NotifyTransactions", true).
-		AddIntOption("SaveLogLevel", LOG_LEVEL.NONE).
-		AddIntOption("QueueLogLevel", LOG_LEVEL.NONE).
-		AddIntOption("DumpTrigger", LOG_LEVEL.NONE).
-		AddIntOption("PollInterval", 30).
-		AddBoolOption("IntervalBetweenPolls", false).
-		AddBoolOption("ValidateValueChanges", true).
 		SetEventsCallback(zwaveEvents).
 		Run())
 
