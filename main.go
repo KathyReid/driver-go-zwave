@@ -33,12 +33,9 @@ func main() {
 	if err != nil {
 		log.FatalError(err, "Could not setup status job")
 	}
-	// statusJob.Start()
 
-	ipAddr, err := ninja.GetNetAddress()
-	if err != nil {
-		log.FatalError(err, "Could not get net address")
-	}
+	// TODO: what's this for???
+	// statusJob.Start()
 
 	zwaveEvents := func(api openzwave.API, event openzwave.Event) {
 		switch event.(type) {
@@ -63,14 +60,21 @@ func main() {
 		}
 	}
 
-	os.Exit(openzwave.
+	configurator := openzwave.
 		BuildAPI("/usr/local/etc/openzwave", ".", "").
 		SetLogger(log).
-		SetEventsCallback(zwaveEvents).
-		Run())
+		SetEventsCallback(zwaveEvents)
 
-	_ = bus
-	_ = ipAddr
+	if configurator.GetBoolOption("logging", false) {
+		callback := func(api openzwave.API, notification openzwave.Notification) {
+			api.Logger().Infof("%v\n", notification)
+		}
+
+		configurator.SetNotificationCallback(callback)
+	}
+
+	os.Exit(configurator.Run())
+
 	_ = statusJob
 
 }
