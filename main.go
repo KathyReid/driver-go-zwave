@@ -46,7 +46,8 @@ func main() {
 		switch event.(type) {
 		case *openzwave.NodeAvailable:
 			log.Infof("device available %v", event.GetNode())
-			newDevice, err := buildDevice(bus, event.GetNode())
+			node := event.GetNode()
+			newDevice, err := GetLibrary().GetDeviceFactory(*node.GetProductId())(bus, node)
 			if err != nil {
 				log.Infof("error while creating device for node %v: %v", event.GetNode(), err)
 				//TODO: generate notification
