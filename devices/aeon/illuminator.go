@@ -61,19 +61,27 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 	}
 
 	device.light.ApplyOnOff = func(state bool) error {
-		level := uint8(0)
+		level := 0
 		if state {
-			level = 255
+			level = 99
 		}
 		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
 			return nil
 		} else {
-			return fmt.Errorf("Failed to change state")
+			return fmt.Errorf("Failed to change on/off state")
 		}
 	}
 
 	device.light.ApplyBrightness = func(state float64) error {
-		return nil
+		level := uint8(0)
+		if state {
+			level = uint8(state * 100)
+		}
+		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
+			return nil
+		} else {
+			return fmt.Errorf("Failed to change brightness")
+		}
 	}
 
 	return device, nil
