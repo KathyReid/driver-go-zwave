@@ -34,8 +34,8 @@ func main() {
 	if err != nil {
 		log.FatalError(err, "Could not setup status job")
 	}
-
-	statusJob.Start()
+	_ = statusJob
+	// statusJob.Start()
 
 	ipAddr, err := ninja.GetNetAddress()
 	if err != nil {
