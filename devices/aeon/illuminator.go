@@ -12,13 +12,15 @@ import (
 )
 
 type illuminator struct {
-	node  openzwave.Node
-	light *devices.LightDevice
+	node       openzwave.Node
+	light      *devices.LightDevice
+	brightness uint8
 }
 
 func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error) {
+	var ok bool
 
-	device := &illuminator{node, nil}
+	device := &illuminator{node, nil, 0}
 
 	productId := node.GetProductId()
 	productDescription := node.GetProductDescription()
@@ -37,6 +39,22 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 		productId.ProductId)
 
 	label := node.GetNodeName()
+
+	// initialize brightness from the current level
+
+	device.brightness, ok = device.node.GetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0)
+	if !ok || device.brightness == 0 {
+		// we have to reset brightness to 100 since we apply brightness when
+		// we switch it on
+
+		//
+		// one implication of this is that if the controller is removed
+		// then replaced, while the light is off, the original brightness
+		// will be lost
+		//
+
+		device.brightness = 100
+	}
 
 	deviceBus, err := bus.AnnounceDevice(address, "light", label, sigs)
 	if err != nil {
@@ -63,7 +81,7 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 	device.light.ApplyOnOff = func(state bool) error {
 		level := uint8(0)
 		if state {
-			level = 255
+			level = device.brightness
 		}
 		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
 			return nil
@@ -73,12 +91,24 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 	}
 
 	device.light.ApplyBrightness = func(state float64) error {
-		level := uint8(state * 100)
-		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
-			return nil
-		} else {
-			return fmt.Errorf("Failed to change brightness")
+		var err error = nil
+		if state < 0 {
+			state = 0
+		} else if state > 1.0 {
+			state = 1.0
 		}
+		level, ok := device.node.GetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0)
+		if ok {
+			device.brightness = uint8(state * 100)
+			if level > 0 {
+				if !device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, device.brightness) {
+					err = fmt.Errorf("Failed to change brightness")
+				}
+			}
+		} else {
+			err = fmt.Errorf("Failed to read existing level from device")
+		}
+		return err
 	}
 
 	return device, nil
