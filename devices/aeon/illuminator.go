@@ -63,7 +63,7 @@ func IlluminatorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.De
 	device.light.ApplyOnOff = func(state bool) error {
 		level := uint8(0)
 		if state {
-			level = uint8(99)
+			level = 255
 		}
 		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
 			return nil
