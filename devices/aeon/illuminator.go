@@ -50,7 +50,7 @@ func (device *illuminator) NodeAdded() {
 
 	// initialize brightness from the current level
 
-	device.brightness, ok = device.node.GetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0)
+	device.brightness, ok = device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if !ok || device.brightness == 0 {
 		// we have to reset brightness to 100 since we apply brightness when
 		// we switch it on
@@ -91,7 +91,7 @@ func (device *illuminator) NodeAdded() {
 		if state {
 			level = device.brightness
 		}
-		if device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, level) {
+		if device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(level) {
 			return nil
 		} else {
 			return fmt.Errorf("Failed to change on/off state")
@@ -105,11 +105,11 @@ func (device *illuminator) NodeAdded() {
 		} else if state > 1.0 {
 			state = 1.0
 		}
-		level, ok := device.node.GetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0)
+		level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 		if ok {
 			device.brightness = uint8(state * 100)
 			if level > 0 {
-				if !device.node.SetUint8Value(CC.SWITCH_MULTILEVEL, 1, 0, device.brightness) {
+				if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(device.brightness) {
 					err = fmt.Errorf("Failed to change brightness")
 				}
 			}
