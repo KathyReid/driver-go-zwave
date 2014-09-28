@@ -127,6 +127,25 @@ func (device *illuminator) NodeAdded() {
 }
 
 func (device *illuminator) NodeChanged() {
+	state := &devices.LightDeviceState{}
+	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	if ok {
+		if level > 100 {
+			level = 100
+		}
+
+		if level != 0 {
+			device.brightness = level
+		}
+
+		onOff := level != 0
+		brightness := float64(device.brightness) / 100.0
+
+		state.OnOff = &onOff
+		state.Brightness = &brightness
+
+		device.light.SetLightState(state)
+	}
 }
 
 func (device *illuminator) NodeRemoved() {
