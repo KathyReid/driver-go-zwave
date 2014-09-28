@@ -6,13 +6,23 @@ import (
 )
 
 type multisensor struct {
-	bus  *ninja.DriverBus
+	api  openzwave.API
 	node openzwave.Node
+	bus  *ninja.DriverBus
 }
 
-func MultiSensorFactory(bus *ninja.DriverBus, node openzwave.Node) openzwave.Device {
-	return &multisensor{bus, node}
+func MultiSensorFactory(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
+	return &multisensor{api, node, bus}
 }
 
-func (device *multisensor) Notify(api openzwave.API, event openzwave.Event) {
+func (device *multisensor) NodeAdded() {
+}
+
+func (device *multisensor) NodeChanged() {
+}
+
+func (device *multisensor) NodeRemoved() {
+}
+
+func (device *multisensor) ValueChanged(openzwave.Value) {
 }

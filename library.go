@@ -7,7 +7,7 @@ import (
 	"github.com/ninjasphere/go-openzwave/MF"
 )
 
-type NinjaDeviceFactory func(bus *ninja.DriverBus, node openzwave.Node) openzwave.Device
+type NinjaDeviceFactory func(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device
 type libraryT map[openzwave.ProductId]NinjaDeviceFactory
 
 var (
@@ -37,11 +37,20 @@ func (lib *libraryT) GetDeviceFactory(id openzwave.ProductId) NinjaDeviceFactory
 	if ok {
 		return factory
 	} else {
-		return func(bus *ninja.DriverBus, node openzwave.Node) openzwave.Device {
+		return func(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
 			return &unsupportedDevice{}
 		}
 	}
 }
 
-func (*unsupportedDevice) Notify(api openzwave.API, event openzwave.Event) {
+func (*unsupportedDevice) NodeAdded() {
+}
+
+func (*unsupportedDevice) NodeChanged() {
+}
+
+func (*unsupportedDevice) ValueChanged(openzwave.Value) {
+}
+
+func (*unsupportedDevice) NodeRemoved() {
 }

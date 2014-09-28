@@ -38,7 +38,7 @@ func main() {
 	// statusJob.Start()
 
 	zwaveDeviceFactory := func(api openzwave.API, node openzwave.Node) openzwave.Device {
-		return GetLibrary().GetDeviceFactory(*node.GetProductId())(bus, node)
+		return GetLibrary().GetDeviceFactory(*node.GetProductId())(api, node, bus)
 
 	}
 
