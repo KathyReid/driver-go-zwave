@@ -87,6 +87,9 @@ func (device *illuminator) NodeAdded() {
 	}
 
 	device.light.ApplyOnOff = func(state bool) error {
+
+		// TODO: synchronize with notification thread
+
 		level := uint8(0)
 		if state {
 			level = device.brightness
@@ -99,6 +102,9 @@ func (device *illuminator) NodeAdded() {
 	}
 
 	device.light.ApplyBrightness = func(state float64) error {
+
+		// TODO: synchronize with notification thread
+
 		var err error = nil
 		if state < 0 {
 			state = 0
@@ -120,6 +126,9 @@ func (device *illuminator) NodeAdded() {
 	}
 
 	device.light.ApplyLightState = func(state *devices.LightDeviceState) error {
+
+		// TODO: synchronize with notification thread
+
 		device.light.ApplyOnOff(*state.OnOff)
 		device.light.ApplyBrightness(*state.Brightness)
 		return nil
