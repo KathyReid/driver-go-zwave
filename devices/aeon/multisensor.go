@@ -5,6 +5,14 @@ import (
 	"github.com/ninjasphere/go-openzwave"
 )
 
-func MultiSensorFactory(bus *ninja.DriverBus, node openzwave.Node) (openzwave.Device, error) {
-	return &struct{}{}, nil
+type multisensor struct {
+	bus  *ninja.DriverBus
+	node openzwave.Node
+}
+
+func MultiSensorFactory(bus *ninja.DriverBus, node openzwave.Node) openzwave.Device {
+	return &multisensor{bus, node}
+}
+
+func (device *multisensor) Notify(api openzwave.API, event openzwave.Event) {
 }
