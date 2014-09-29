@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxDeviceBrightness = 99 // by experiment, a level of 100 does not work for this device
+	maxDeviceBrightness = 100 // by experiment, a level of 100 does not work for this device
 )
 
 type illuminator struct {
@@ -65,7 +65,7 @@ func (device *illuminator) NodeAdded() {
 		// will be lost
 		//
 
-		device.brightness = maxDeviceBrightness
+		device.brightness = maxDeviceBrightness - 1
 	}
 
 	deviceBus, err := device.bus.AnnounceDevice(address, "light", label, sigs)
@@ -121,6 +121,9 @@ func (device *illuminator) NodeAdded() {
 			if device.brightness < 1 {
 				device.brightness = 1
 			}
+			if device.brightness == maxDeviceBrightness {
+				device.brightness = maxDeviceBrightness - 1 // aeon ignores attempts to set level to 100
+			}
 			if level > 0 {
 				if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(device.brightness) {
 					err = fmt.Errorf("Failed to change brightness")
@@ -146,8 +149,8 @@ func (device *illuminator) sendLightState() {
 	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
-		if level > maxDeviceBrightness {
-			level = maxDeviceBrightness
+		if level > maxDeviceBrightness-1 {
+			level = maxDeviceBrightness - 1
 		}
 
 		if level != 0 {
