@@ -118,6 +118,9 @@ func (device *illuminator) NodeAdded() {
 		level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 		if ok {
 			device.brightness = uint8(state * maxDeviceBrightness)
+			if device.brightness < 1 {
+				device.brightness = 1
+			}
 			if level > 0 {
 				if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(device.brightness) {
 					err = fmt.Errorf("Failed to change brightness")
