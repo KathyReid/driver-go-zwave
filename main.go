@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"flag"
+
 	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-ninja/logger"
 	"github.com/ninjasphere/go-openzwave"
@@ -13,6 +15,11 @@ const driverName = "driver-zwave"
 var log = logger.GetLogger(driverName)
 
 func main() {
+
+	var debug bool
+
+	flag.BoolVar(&debug, "debug", false, "Enable debugging")
+	flag.Parse()
 
 	log.Infof("Starting " + driverName)
 
@@ -47,7 +54,7 @@ func main() {
 		SetLogger(log).
 		SetDeviceFactory(zwaveDeviceFactory)
 
-	if configurator.GetBoolOption("logging", false) {
+	if debug {
 		callback := func(api openzwave.API, notification openzwave.Notification) {
 			api.Logger().Infof("%v\n", notification)
 		}
