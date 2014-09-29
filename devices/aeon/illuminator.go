@@ -11,6 +11,10 @@ import (
 	"github.com/ninjasphere/go-openzwave/CC"
 )
 
+const (
+	maxDeviceBrightness = 99 // by experiment, a level of 100 does not work for this device
+)
+
 type illuminator struct {
 	api        openzwave.API
 	node       openzwave.Node
@@ -61,7 +65,7 @@ func (device *illuminator) NodeAdded() {
 		// will be lost
 		//
 
-		device.brightness = 100
+		device.brightness = maxDeviceBrightness
 	}
 
 	deviceBus, err := device.bus.AnnounceDevice(address, "light", label, sigs)
@@ -113,7 +117,7 @@ func (device *illuminator) NodeAdded() {
 		}
 		level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 		if ok {
-			device.brightness = uint8(state * 100)
+			device.brightness = uint8(state * maxDeviceBrightness)
 			if level > 0 {
 				if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(device.brightness) {
 					err = fmt.Errorf("Failed to change brightness")
@@ -139,8 +143,8 @@ func (device *illuminator) NodeChanged() {
 	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
-		if level > 100 {
-			level = 100
+		if level > maxDeviceBrightness {
+			level = maxDeviceBrightness
 		}
 
 		if level != 0 {
@@ -148,7 +152,7 @@ func (device *illuminator) NodeChanged() {
 		}
 
 		onOff := level != 0
-		brightness := float64(device.brightness) / 100.0
+		brightness := float64(device.brightness) / maxDeviceBrightness
 
 		state.OnOff = &onOff
 		state.Brightness = &brightness
