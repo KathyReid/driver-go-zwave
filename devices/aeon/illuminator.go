@@ -142,7 +142,7 @@ func (device *illuminator) NodeAdded() {
 	}
 }
 
-func (device *illuminator) NodeChanged() {
+func (device *illuminator) sendLightState() {
 	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
@@ -164,8 +164,14 @@ func (device *illuminator) NodeChanged() {
 	}
 }
 
+func (device *illuminator) NodeChanged() {
+	device.sendLightState()
+}
+
 func (device *illuminator) NodeRemoved() {
 }
 
-func (device *illuminator) ValueChanged(openzwave.Value) {
+func (device *illuminator) ValueChanged(v openzwave.Value) {
+	// TODO: check that v matches SWITCH_MULTILEVEL, 1, 0
+	device.sendLightState()
 }
