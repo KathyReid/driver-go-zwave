@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	maxDeviceBrightness = 100 // by experiment, a level of 100 does not work for this device
+	maxDeviceBrightness = 100             // by experiment, a level of 100 does not work for this device
+	maxDelay            = time.Second * 5 // maximum delay for apply calls
 )
 
 type illuminator struct {
@@ -94,8 +95,6 @@ func (device *illuminator) NodeAdded() {
 
 	device.light.ApplyOnOff = func(state bool) error {
 
-		// TODO: synchronize with notification thread
-
 		level := uint8(0)
 		if state {
 			level = device.brightness
@@ -104,8 +103,6 @@ func (device *illuminator) NodeAdded() {
 	}
 
 	device.light.ApplyBrightness = func(state float64) error {
-
-		// TODO: synchronize with notification thread
 
 		var err error = nil
 		if state < 0 {
@@ -126,7 +123,7 @@ func (device *illuminator) NodeAdded() {
 				err = device.setDeviceLevel(device.brightness)
 			}
 		} else {
-			err = fmt.Errorf("Failed to read existing level from device")
+			err = fmt.Errorf("Unable to apply brightness - get failed.")
 		}
 		return err
 	}
@@ -135,38 +132,55 @@ func (device *illuminator) NodeAdded() {
 
 		// TODO: synchronize with notification thread
 
-		device.light.ApplyOnOff(*state.OnOff)
-		device.light.ApplyBrightness(*state.Brightness)
-		return nil
+		err1 := light.ApplyBrightness(*state.Brightness)
+		err2 := device.light.ApplyOnOff(*state.OnOff)
+
+		if (err2 != nil) {
+			return err2
+		} else {
+			return err1
+		}
 	}
 }
 
+//
+// Issue a set against the OpenZWave API, then wait until the refreshed
+// value matches the requested level or until a timeout, issuing refreshes
+// as required.
+//
 func (device *illuminator) setDeviceLevel(level uint8) error {
-	if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(level) {
-		return fmt.Errorf("Attempt to set level to %d", level)
-	}
 
-	timer := time.NewTimer(time.Second * 5)
+	val := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0)
+
+	if !val.SetUint8(level) {
+		return fmt.Errorf("Failed to set level to %d - set failed", level)
+	}
+	timer := time.NewTimer(maxDelay)
 
 	// loop until timeout or until refresh yields expected level
+
 	for {
+		if !val.Refresh() {
+			return fmt.Errorf("Failed to set required level to %d - refresh failed", level)
+		}
 		select {
 		case timeout := <-timer.C:
 			_ = timeout
-			return fmt.Errorf("Failed to set required level")
+			return fmt.Errorf("Failed to set required level to %d - timeout", level)
 		case refreshed := <-device.refresh:
 			_ = refreshed
-			current, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+			current, ok := val.GetUint8()
 			if ok && current == level {
 				return nil
-			}
-			if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).Refresh() {
-				return fmt.Errorf("Failed to refresh level")
 			}
 		}
 	}
 }
 
+//
+// This call is used to reflect notifications about the current 
+// state of the light back to towards the ninja network
+//
 func (device *illuminator) sendLightState() {
 	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
