@@ -132,10 +132,10 @@ func (device *illuminator) NodeAdded() {
 
 		// TODO: synchronize with notification thread
 
-		err1 := light.ApplyBrightness(*state.Brightness)
+		err1 := device.light.ApplyBrightness(*state.Brightness)
 		err2 := device.light.ApplyOnOff(*state.OnOff)
 
-		if (err2 != nil) {
+		if err2 != nil {
 			return err2
 		} else {
 			return err1
@@ -178,7 +178,7 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 }
 
 //
-// This call is used to reflect notifications about the current 
+// This call is used to reflect notifications about the current
 // state of the light back to towards the ninja network
 //
 func (device *illuminator) sendLightState() {
