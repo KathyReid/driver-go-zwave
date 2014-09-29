@@ -2,6 +2,7 @@ package aeon
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/bitly/go-simplejson"
 
@@ -21,10 +22,11 @@ type illuminator struct {
 	bus        *ninja.DriverBus
 	light      *devices.LightDevice
 	brightness uint8
+	refresh    chan struct{}
 }
 
 func IlluminatorFactory(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
-	device := &illuminator{api, node, bus, nil, 0}
+	device := &illuminator{api, node, bus, nil, 0, make(chan struct{}, 0)}
 	return device
 }
 
@@ -98,11 +100,7 @@ func (device *illuminator) NodeAdded() {
 		if state {
 			level = device.brightness
 		}
-		if device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(level) {
-			return nil
-		} else {
-			return fmt.Errorf("Failed to change on/off state")
-		}
+		return device.setDeviceLevel(level)
 	}
 
 	device.light.ApplyBrightness = func(state float64) error {
@@ -125,9 +123,7 @@ func (device *illuminator) NodeAdded() {
 				device.brightness = maxDeviceBrightness - 1 // aeon ignores attempts to set level to 100
 			}
 			if level > 0 {
-				if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(device.brightness) {
-					err = fmt.Errorf("Failed to change brightness")
-				}
+				err = device.setDeviceLevel(device.brightness)
 			}
 		} else {
 			err = fmt.Errorf("Failed to read existing level from device")
@@ -142,6 +138,32 @@ func (device *illuminator) NodeAdded() {
 		device.light.ApplyOnOff(*state.OnOff)
 		device.light.ApplyBrightness(*state.Brightness)
 		return nil
+	}
+}
+
+func (device *illuminator) setDeviceLevel(level uint8) error {
+	if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetUint8(level) {
+		return fmt.Errorf("Attempt to set level to %d", level)
+	}
+
+	timer := time.NewTimer(time.Second * 5)
+
+	// loop until timeout or until refresh yields expected level
+	for {
+		select {
+		case timeout := <-timer.C:
+			_ = timeout
+			return fmt.Errorf("Failed to set required level")
+		case refreshed := <-device.refresh:
+			_ = refreshed
+			current, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+			if ok && current == level {
+				return nil
+			}
+			if !device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).Refresh() {
+				return fmt.Errorf("Failed to refresh level")
+			}
+		}
 	}
 }
 
@@ -168,13 +190,20 @@ func (device *illuminator) sendLightState() {
 }
 
 func (device *illuminator) NodeChanged() {
-	device.sendLightState()
+	select {
+	case device.refresh <- struct{}{}:
+	default:
+		device.sendLightState()
+	}
 }
 
 func (device *illuminator) NodeRemoved() {
 }
 
 func (device *illuminator) ValueChanged(v openzwave.Value) {
-	// TODO: check that v matches SWITCH_MULTILEVEL, 1, 0
-	device.sendLightState()
+	select {
+	case device.refresh <- struct{}{}:
+	default:
+		device.sendLightState()
+	}
 }
