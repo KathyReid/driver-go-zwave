@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bitly/go-simplejson"
-
-	"github.com/ninjasphere/go-ninja"
-	"github.com/ninjasphere/go-ninja/devices"
+	"github.com/ninjasphere/go-ninja/api"
+	"github.com/ninjasphere/go-ninja/channels"
+	"github.com/ninjasphere/go-ninja/model"
 	"github.com/ninjasphere/go-openzwave"
 	"github.com/ninjasphere/go-openzwave/CC"
+
+	"github.com/ninjasphere/driver-go-zwave/spi"
 )
 
 const (
@@ -18,43 +19,74 @@ const (
 )
 
 type illuminator struct {
-	api        openzwave.API
-	node       openzwave.Node
-	bus        *ninja.DriverBus
-	light      *devices.LightDevice
-	brightness uint8 // brightness is a cache of the current brightness when the device is switched off.
+	info   *model.Device
+	driver spi.ZWaveDriver
+	node   openzwave.Node
+
+	// brightness is a cache of the current brightness when the device is switched off.
 	// It is updated from the device on a confirmed attempt to adjust the level to a non-zero value
+	brightness uint8
+
 	refresh chan struct{} // used to wait for confirmation of updates after a level change
+
+	events func(event string, payload interface{}) error
+
+	onOffChannel      *channels.OnOffChannel
+	brightnessChannel *channels.BrightnessChannel
 }
 
-func IlluminatorFactory(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
-	device := &illuminator{api, node, bus, nil, 0, make(chan struct{}, 0)}
+func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
+	device := &illuminator{
+		info: &model.Device{
+			NaturalIDType: "ninja.zwave.v0",
+		},
+		driver:     driver,
+		node:       node,
+		brightness: 0,
+		refresh:    make(chan struct{}, 0),
+	}
 	return device
+}
+
+func (device *illuminator) GetDriver() ninja.Driver {
+	return device.driver.GetNinjaDriver()
+}
+
+func (device *illuminator) GetDeviceInfo() *model.Device {
+	return device.info
+}
+
+func (device *illuminator) SetEventHandler(events func(event string, payload interface{}) error) {
+	device.events = events
 }
 
 func (device *illuminator) NodeAdded() {
 	var ok bool
 
+	api := device.driver.GetOpenZWaveAPI()
 	node := device.node
-	api := device.api
-
 	productId := node.GetProductId()
 	productDescription := node.GetProductDescription()
 
-	sigs := simplejson.New()
-	sigs.Set("ninja:manufacturer", productDescription.ManufacturerName)
-	sigs.Set("ninja:productName", productDescription.ProductName)
-	sigs.Set("ninja:productType", productDescription.ProductType)
-	sigs.Set("ninja:thingType", "light")
+	sigs := make(map[string]string)
 
-	address := fmt.Sprintf(
+	sigs["zwave:manufacturerId"] = productId.ManufacturerId
+	sigs["zwave:productId"] = productId.ProductId
+	sigs["zwave:manufacturerName"] = productDescription.ManufacturerName
+	sigs["zwave:productName"] = productDescription.ProductName
+	sigs["zwave:productType"] = productDescription.ProductType
+	sigs["ninja:thingType"] = "light"
+
+	device.info.Signatures = &sigs
+
+	device.info.NaturalID = fmt.Sprintf(
 		"%08x:%03d:%s:%s",
 		node.GetHomeId(),
 		node.GetId(),
 		productId.ManufacturerId,
 		productId.ProductId)
 
-	label := node.GetNodeName()
+	device.info.Name = &productDescription.ProductName
 
 	// initialize brightness from the current level
 
@@ -72,72 +104,67 @@ func (device *illuminator) NodeAdded() {
 		device.brightness = maxDeviceBrightness
 	}
 
-	deviceBus, err := device.bus.AnnounceDevice(address, "light", label, sigs)
+	conn := device.driver.GetNinjaConnection()
+	err := conn.ExportDevice(device)
 	if err != nil {
-		api.Logger().Infof("failed to announce device: %v", node)
+		api.Logger().Infof("failed to export node: %v as device", node)
 		return
 	}
 
-	device.light, err = devices.CreateLightDevice(label, deviceBus)
+	device.onOffChannel = channels.NewOnOffChannel(device)
+	err = conn.ExportChannel(device, device.onOffChannel, "on-off")
 	if err != nil {
-		api.Logger().Infof("failed to create light device: %v", node)
+		api.Logger().Infof("failed to export on-off channel for %v", node)
 		return
 	}
 
-	if err := device.light.EnableOnOffChannel(); err != nil {
-		api.Logger().Infof("Failed to enable on/off channel: %v", node)
-		return
+	device.brightnessChannel = channels.NewBrightnessChannel(device)
+	err = conn.ExportChannel(device, device.brightnessChannel, "brightness")
+	if err != nil {
+		api.Logger().Infof("failed to export brightness channel for %v", node)
 	}
+}
 
-	if err := device.light.EnableBrightnessChannel(); err != nil {
-		api.Logger().Infof("Failed to brightness channel: %v", node)
-		return
+func (device *illuminator) SetOnOff(state bool) error {
+	level := uint8(0)
+	if state {
+		level = device.brightness
 	}
+	return device.setDeviceLevel(level)
+}
 
-	device.light.ApplyOnOff = func(state bool) error {
-
-		level := uint8(0)
-		if state {
-			level = device.brightness
-		}
-		return device.setDeviceLevel(level)
+func (device *illuminator) ToggleOnOff() error {
+	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	if !ok {
+		return fmt.Errorf("Unable to determine current state of switch")
 	}
+	if level == 0 {
+		return device.setDeviceLevel(device.brightness)
+	} else {
+		return device.setDeviceLevel(0)
+	}
+}
 
-	device.light.ApplyBrightness = func(state float64) error {
+func (device *illuminator) SetBrightness(state float64) error {
 
-		var err error = nil
-		if state < 0 {
-			state = 0
-		} else if state > 1.0 {
-			state = 1.0
-		}
-		level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
-		if ok {
-			newLevel := uint8(state * maxDeviceBrightness)
-			if level > 0 {
-				err = device.setDeviceLevel(newLevel)
-			} else {
-				device.brightness = newLevel // to be applied when device is switched on
-			}
+	var err error = nil
+	if state < 0 {
+		state = 0
+	} else if state > 1.0 {
+		state = 1.0
+	}
+	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	if ok {
+		newLevel := uint8(state * maxDeviceBrightness)
+		if level > 0 {
+			err = device.setDeviceLevel(newLevel)
 		} else {
-			err = fmt.Errorf("Unable to apply brightness - get failed.")
+			device.brightness = newLevel // to be applied when device is switched on
 		}
-		return err
+	} else {
+		err = fmt.Errorf("Unable to apply brightness - get failed.")
 	}
-
-	device.light.ApplyLightState = func(state *devices.LightDeviceState) error {
-
-		// TODO: synchronize with notification thread
-
-		err1 := device.light.ApplyBrightness(*state.Brightness)
-		err2 := device.light.ApplyOnOff(*state.OnOff)
-
-		if err2 != nil {
-			return err2
-		} else {
-			return err1
-		}
-	}
+	return err
 }
 
 //
@@ -190,7 +217,6 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 // state of the light back to towards the ninja network
 //
 func (device *illuminator) sendLightState() {
-	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
 		if device.brightness == maxDeviceBrightness-1 {
@@ -200,10 +226,9 @@ func (device *illuminator) sendLightState() {
 		onOff := level != 0
 		brightness := float64(device.brightness) / maxDeviceBrightness
 
-		state.OnOff = &onOff
-		state.Brightness = &brightness
-
-		device.light.SetLightState(state)
+		device.onOffChannel.SendState(onOff)
+		// TODO: device.brightnessChannel.SendState(brightness)
+		_ = brightness
 	}
 }
 
