@@ -22,8 +22,9 @@ type illuminator struct {
 	node       openzwave.Node
 	bus        *ninja.DriverBus
 	light      *devices.LightDevice
-	brightness uint8
-	refresh    chan struct{}
+	brightness uint8 // brightness is a cache of the current brightness when the device is switched off.
+	// It is updated from the device on a confirmed attempt to adjust the level to a non-zero value
+	refresh chan struct{} // used to wait for confirmation of updates after a level change
 }
 
 func IlluminatorFactory(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
@@ -68,7 +69,7 @@ func (device *illuminator) NodeAdded() {
 		// will be lost
 		//
 
-		device.brightness = maxDeviceBrightness - 1
+		device.brightness = maxDeviceBrightness
 	}
 
 	deviceBus, err := device.bus.AnnounceDevice(address, "light", label, sigs)
@@ -112,15 +113,11 @@ func (device *illuminator) NodeAdded() {
 		}
 		level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 		if ok {
-			device.brightness = uint8(state * maxDeviceBrightness)
-			if device.brightness < 1 {
-				device.brightness = 1
-			}
-			if device.brightness == maxDeviceBrightness {
-				device.brightness = maxDeviceBrightness - 1 // aeon ignores attempts to set level to 100
-			}
+			newLevel := uint8(state * maxDeviceBrightness)
 			if level > 0 {
-				err = device.setDeviceLevel(device.brightness)
+				err = device.setDeviceLevel(newLevel)
+			} else {
+				device.brightness = newLevel // to be applied when device is switched on
 			}
 		} else {
 			err = fmt.Errorf("Unable to apply brightness - get failed.")
@@ -152,6 +149,11 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 
 	val := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0)
 
+	if level >= maxDeviceBrightness {
+		// aeon will reject attempts to set the level to exactly 100
+		level = maxDeviceBrightness - 1
+	}
+
 	if !val.SetUint8(level) {
 		return fmt.Errorf("Failed to set level to %d - set failed", level)
 	}
@@ -166,11 +168,17 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 		select {
 		case timeout := <-timer.C:
 			_ = timeout
+			if level != 0 {
+				device.brightness = level
+			}
 			return fmt.Errorf("Failed to set required level to %d - timeout", level)
 		case refreshed := <-device.refresh:
 			_ = refreshed
 			current, ok := val.GetUint8()
 			if ok && current == level {
+				if level != 0 {
+					device.brightness = level
+				}
 				return nil
 			}
 		}
@@ -185,12 +193,8 @@ func (device *illuminator) sendLightState() {
 	state := &devices.LightDeviceState{}
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
-		if level > maxDeviceBrightness-1 {
-			level = maxDeviceBrightness - 1
-		}
-
-		if level != 0 {
-			device.brightness = level
+		if device.brightness == maxDeviceBrightness-1 {
+			device.brightness = 100
 		}
 
 		onOff := level != 0
