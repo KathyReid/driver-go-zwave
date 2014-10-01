@@ -29,7 +29,7 @@ type illuminator struct {
 
 	refresh chan struct{} // used to wait for confirmation of updates after a level change
 
-	events func(event string, payload interface{}) error
+	sendEvent func(event string, payload interface{}) error
 
 	onOffChannel      *channels.OnOffChannel
 	brightnessChannel *channels.BrightnessChannel
@@ -62,8 +62,8 @@ func (device *illuminator) GetDeviceInfo() *model.Device {
 	return device.info
 }
 
-func (device *illuminator) SetEventHandler(events func(event string, payload interface{}) error) {
-	device.events = events
+func (device *illuminator) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
+	device.sendEvent = sendEvent
 }
 
 func (device *illuminator) NodeAdded() {
