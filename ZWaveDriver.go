@@ -4,7 +4,6 @@ import (
 	"github.com/ninjasphere/go-ninja/api"
 	"github.com/ninjasphere/go-ninja/logger"
 	"github.com/ninjasphere/go-ninja/model"
-	"github.com/ninjasphere/go-ninja/rpc"
 
 	"github.com/ninjasphere/go-openzwave"
 )
@@ -81,7 +80,7 @@ func newZWaveDriver(debug bool) (*zwaveDriver, error) {
 	return driver, nil
 }
 
-func (d *zwaveDriver) Start(message *rpc.Message, config *ZWaveDriverConfig) error {
+func (d *zwaveDriver) Start(config *ZWaveDriverConfig) error {
 	log.Infof("Driver %s starting with config %v", driverName, config)
 
 	d.config = config
@@ -115,7 +114,7 @@ func (d *zwaveDriver) Start(message *rpc.Message, config *ZWaveDriverConfig) err
 	return nil
 }
 
-func (d *zwaveDriver) Stop(message *rpc.Message) error {
+func (d *zwaveDriver) Stop() error {
 	// TODO: propagate shutdown request to ZWave driver and let it take it down
 	log.Infof("Stop received - shutting down")
 	d.exit <- 0
