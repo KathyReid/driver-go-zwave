@@ -148,9 +148,8 @@ func (d *driver) Start(config *config) error {
 }
 
 func (d *driver) Stop() error {
-	// TODO: propagate shutdown request to ZWave driver and let it take it down
 	log.Infof("Stop received - shutting down")
-	d.exit <- 0
+	d.zwaveAPI.Shutdown(0)
 	return nil
 }
 
