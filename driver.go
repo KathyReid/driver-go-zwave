@@ -21,10 +21,10 @@ var (
 type driver struct {
 	config    *config
 	conn      *ninja.Connection
+	sendEvent func(event string, payload interface{}) error
 	debug     bool
 	zwaveAPI  openzwave.API
 	exit      chan int
-	sendEvent func(event string, payload interface{}) error
 }
 
 type config struct {
@@ -145,7 +145,7 @@ func (d *driver) Stop() error {
 }
 
 // wait until the drivers are ready for us to shutdown.
-func (d *driver) Wait() int {
+func (d *driver) wait() int {
 	return <-d.exit
 }
 
