@@ -33,6 +33,7 @@ type illuminator struct {
 
 	onOffChannel      *channels.OnOffChannel
 	brightnessChannel *channels.BrightnessChannel
+	notifiedLevel     *uint8
 }
 
 func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
@@ -130,6 +131,7 @@ func (device *illuminator) NodeAdded() {
 	if err != nil {
 		api.Logger().Infof("failed to export brightness channel for %v: %s", node, err)
 	}
+
 }
 
 func (device *illuminator) SetOnOff(state bool) error {
@@ -163,6 +165,7 @@ func (device *illuminator) SetBrightness(state float64) error {
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
 		newLevel := uint8(state * maxDeviceBrightness)
+		device.notifiedLevel = nil
 		if level > 0 {
 			err = device.setDeviceLevel(newLevel)
 		} else {
@@ -226,6 +229,11 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 func (device *illuminator) sendLightState() {
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
+
+		if device.notifiedLevel != nil && *device.notifiedLevel == level {
+			return
+		}
+
 		if device.brightness == maxDeviceBrightness-1 {
 			device.brightness = 100
 		}
@@ -235,6 +243,8 @@ func (device *illuminator) sendLightState() {
 
 		device.onOffChannel.SendState(onOff)
 		device.brightnessChannel.SendState(brightness)
+
+		device.notifiedLevel = &level
 	}
 }
 
