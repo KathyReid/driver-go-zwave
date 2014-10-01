@@ -18,15 +18,6 @@ var (
 	info = ninja.LoadModuleInfo("./package.json")
 )
 
-/*model.Module{
-	ID:          "com.ninjablocks.zwave",
-	Name:        "ZWave Driver",
-	Version:     "0.2.0",
-	Description: "Ninja Blocks ZWave driver",
-	Author:      "Jon Seymour <jon@ninjablocks.com>",
-	License:     "MIT",
-}*/
-
 type driver struct {
 	config    *config
 	conn      *ninja.Connection
