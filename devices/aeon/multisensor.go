@@ -1,18 +1,18 @@
 package aeon
 
 import (
-	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-openzwave"
+
+	"github.com/ninjasphere/driver-go-zwave/spi"
 )
 
 type multisensor struct {
-	api  openzwave.API
-	node openzwave.Node
-	bus  *ninja.DriverBus
+	driver spi.ZWaveDriver
+	node   openzwave.Node
 }
 
-func MultiSensorFactory(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
-	return &multisensor{api, node, bus}
+func MultiSensorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
+	return &multisensor{driver, node}
 }
 
 func (device *multisensor) NodeAdded() {

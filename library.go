@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/ninjasphere/driver-go-zwave/devices/aeon"
-	"github.com/ninjasphere/go-ninja"
 	"github.com/ninjasphere/go-openzwave"
 	"github.com/ninjasphere/go-openzwave/MF"
+
+	"github.com/ninjasphere/driver-go-zwave/devices/aeon"
+	"github.com/ninjasphere/driver-go-zwave/spi"
 )
 
-type NinjaDeviceFactory func(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device
+type NinjaDeviceFactory func(spi spi.ZWaveDriver, node openzwave.Node) openzwave.Device
 type libraryT map[openzwave.ProductId]NinjaDeviceFactory
 
 var (
@@ -37,7 +38,7 @@ func (lib *libraryT) GetDeviceFactory(id openzwave.ProductId) NinjaDeviceFactory
 	if ok {
 		return factory
 	} else {
-		return func(api openzwave.API, node openzwave.Node, bus *ninja.DriverBus) openzwave.Device {
+		return func(spi spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
 			return &unsupportedDevice{}
 		}
 	}
