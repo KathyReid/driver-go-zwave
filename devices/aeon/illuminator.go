@@ -55,7 +55,7 @@ func IlluminatorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device
 }
 
 func (device *illuminator) GetDriver() ninja.Driver {
-	return device.driver.GetNinjaDriver()
+	return device.driver.Ninja()
 }
 
 func (device *illuminator) GetDeviceInfo() *model.Device {
@@ -69,7 +69,7 @@ func (device *illuminator) SetEventHandler(sendEvent func(event string, payload 
 func (device *illuminator) NodeAdded() {
 	var ok bool
 
-	api := device.driver.GetOpenZWaveAPI()
+	api := device.driver.ZWave()
 	node := device.node
 	productId := node.GetProductId()
 	productDescription := node.GetProductDescription()
@@ -119,7 +119,7 @@ func (device *illuminator) NodeAdded() {
 		device.brightness = maxDeviceBrightness
 	}
 
-	conn := device.driver.GetNinjaConnection()
+	conn := device.driver.Connection()
 	err := conn.ExportDevice(device)
 	if err != nil {
 		api.Logger().Infof("failed to export node: %v as device: %s", node, err)

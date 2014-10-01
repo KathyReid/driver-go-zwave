@@ -34,15 +34,15 @@ func defaultConfig() *config {
 	return &config{}
 }
 
-func (driver *driver) GetOpenZWaveAPI() openzwave.API {
+func (driver *driver) ZWave() openzwave.API {
 	return driver.zwaveAPI
 }
 
-func (driver *driver) GetNinjaDriver() ninja.Driver {
+func (driver *driver) Ninja() ninja.Driver {
 	return driver
 }
 
-func (driver *driver) GetNinjaConnection() *ninja.Connection {
+func (driver *driver) Connection() *ninja.Connection {
 	return driver.conn
 }
 
