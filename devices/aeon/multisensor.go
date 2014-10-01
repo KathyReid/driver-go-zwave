@@ -7,11 +7,11 @@ import (
 )
 
 type multisensor struct {
-	driver spi.ZWaveDriver
+	driver spi.Driver
 	node   openzwave.Node
 }
 
-func MultiSensorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
+func MultiSensorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device {
 	return &multisensor{driver, node}
 }
 

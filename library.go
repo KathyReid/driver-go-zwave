@@ -8,7 +8,7 @@ import (
 	"github.com/ninjasphere/driver-go-zwave/spi"
 )
 
-type NinjaDeviceFactory func(spi spi.ZWaveDriver, node openzwave.Node) openzwave.Device
+type NinjaDeviceFactory func(spi spi.Driver, node openzwave.Node) openzwave.Device
 type libraryT map[openzwave.ProductId]NinjaDeviceFactory
 
 var (
@@ -38,7 +38,7 @@ func (lib *libraryT) GetDeviceFactory(id openzwave.ProductId) NinjaDeviceFactory
 	if ok {
 		return factory
 	} else {
-		return func(spi spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
+		return func(spi spi.Driver, node openzwave.Node) openzwave.Device {
 			return &unsupportedDevice{}
 		}
 	}

@@ -19,11 +19,11 @@ const (
 )
 
 type illuminator struct {
-	driver    spi.ZWaveDriver
+	driver    spi.Driver
 	info      *model.Device
 	sendEvent func(event string, payload interface{}) error
 
-	node      openzwave.Node
+	node openzwave.Node
 
 	onOffChannel      *channels.OnOffChannel
 	brightnessChannel *channels.BrightnessChannel
@@ -37,7 +37,7 @@ type illuminator struct {
 	emitter *filteredEmitter
 }
 
-func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
+func IlluminatorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device {
 	device := &illuminator{
 		info:       &model.Device{},
 		driver:     driver,

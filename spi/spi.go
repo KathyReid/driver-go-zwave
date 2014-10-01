@@ -6,7 +6,7 @@ import (
 	"github.com/ninjasphere/go-openzwave"
 )
 
-type ZWaveDriver interface {
+type Driver interface {
 	GetOpenZWaveAPI() openzwave.API
 	GetNinjaDriver() ninja.Driver
 	GetNinjaConnection() *ninja.Connection
