@@ -19,20 +19,20 @@ const (
 )
 
 type illuminator struct {
-	info   *model.Device
-	driver spi.ZWaveDriver
-	node   openzwave.Node
+	driver    spi.ZWaveDriver
+	info      *model.Device
+	sendEvent func(event string, payload interface{}) error
+
+	node      openzwave.Node
+
+	onOffChannel      *channels.OnOffChannel
+	brightnessChannel *channels.BrightnessChannel
 
 	// brightness is a cache of the current brightness when the device is switched off.
 	// It is updated from the device on a confirmed attempt to adjust the level to a non-zero value
 	brightness uint8
 
 	refresh chan struct{} // used to wait for confirmation of updates after a level change
-
-	sendEvent func(event string, payload interface{}) error
-
-	onOffChannel      *channels.OnOffChannel
-	brightnessChannel *channels.BrightnessChannel
 
 	emitter *filteredEmitter
 }
