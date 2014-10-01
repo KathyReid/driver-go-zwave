@@ -28,7 +28,7 @@ var (
 }*/
 
 type driver struct {
-	config    *ZWaveDriverConfig
+	config    *config
 	conn      *ninja.Connection
 	debug     bool
 	zwaveAPI  openzwave.API
@@ -36,11 +36,11 @@ type driver struct {
 	sendEvent func(event string, payload interface{}) error
 }
 
-type ZWaveDriverConfig struct {
+type config struct {
 }
 
-func defaultConfig() *ZWaveDriverConfig {
-	return &ZWaveDriverConfig{}
+func defaultConfig() *config {
+	return &config{}
 }
 
 func (driver *driver) GetOpenZWaveAPI() openzwave.API {
@@ -81,7 +81,7 @@ func newZWaveDriver(debug bool) (*driver, error) {
 	return driver, nil
 }
 
-func (d *driver) Start(config *ZWaveDriverConfig) error {
+func (d *driver) Start(config *config) error {
 	log.Infof("Driver %s starting with config %v", driverName, config)
 
 	d.config = config
