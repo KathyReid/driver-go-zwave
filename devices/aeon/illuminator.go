@@ -37,9 +37,7 @@ type illuminator struct {
 
 func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
 	device := &illuminator{
-		info: &model.Device{
-			NaturalIDType: "ninja.zwave.v0",
-		},
+		info:       &model.Device{},
 		driver:     driver,
 		node:       node,
 		brightness: 0,
@@ -79,6 +77,15 @@ func (device *illuminator) NodeAdded() {
 
 	device.info.Signatures = &sigs
 
+	//
+	// This naming scheme won't survive reconfigurations of the network
+	// where the network has two devices of the same type.
+	//
+	// So, we will need to investigate generating a unique token that
+	// gets stored in the device. When this scheme is implemented we
+	// should update the naming scheme used here from v0 to v1.
+	//
+	device.info.NaturalIDType = "ninja.zwave.v0"
 	device.info.NaturalID = fmt.Sprintf(
 		"%08x:%03d:%s:%s",
 		node.GetHomeId(),
@@ -107,21 +114,21 @@ func (device *illuminator) NodeAdded() {
 	conn := device.driver.GetNinjaConnection()
 	err := conn.ExportDevice(device)
 	if err != nil {
-		api.Logger().Infof("failed to export node: %v as device", node)
+		api.Logger().Infof("failed to export node: %v as device: %s", node, err)
 		return
 	}
 
 	device.onOffChannel = channels.NewOnOffChannel(device)
 	err = conn.ExportChannel(device, device.onOffChannel, "on-off")
 	if err != nil {
-		api.Logger().Infof("failed to export on-off channel for %v", node)
+		api.Logger().Infof("failed to export on-off channel for %v: %s", node, err)
 		return
 	}
 
 	device.brightnessChannel = channels.NewBrightnessChannel(device)
 	err = conn.ExportChannel(device, device.brightnessChannel, "brightness")
 	if err != nil {
-		api.Logger().Infof("failed to export brightness channel for %v", node)
+		api.Logger().Infof("failed to export brightness channel for %v: %s", node, err)
 	}
 }
 
@@ -227,8 +234,7 @@ func (device *illuminator) sendLightState() {
 		brightness := float64(device.brightness) / maxDeviceBrightness
 
 		device.onOffChannel.SendState(onOff)
-		// TODO: device.brightnessChannel.SendState(brightness)
-		_ = brightness
+		device.brightnessChannel.SendState(brightness)
 	}
 }
 
