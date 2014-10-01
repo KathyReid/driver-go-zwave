@@ -33,7 +33,8 @@ type illuminator struct {
 
 	onOffChannel      *channels.OnOffChannel
 	brightnessChannel *channels.BrightnessChannel
-	notifiedLevel     *uint8
+
+	emitter *filteredEmitter
 }
 
 func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.Device {
@@ -44,6 +45,12 @@ func IlluminatorFactory(driver spi.ZWaveDriver, node openzwave.Node) openzwave.D
 		brightness: 0,
 		refresh:    make(chan struct{}, 0),
 	}
+	device.emitter = newFilteredEmitter(
+		func(level uint8) {
+			device.unconditionalSendLightState(level)
+		},
+		30*time.Second)
+
 	return device
 }
 
@@ -132,6 +139,7 @@ func (device *illuminator) NodeAdded() {
 		api.Logger().Infof("failed to export brightness channel for %v: %s", node, err)
 	}
 
+	device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetPollingState(true)
 }
 
 func (device *illuminator) SetOnOff(state bool) error {
@@ -165,12 +173,12 @@ func (device *illuminator) SetBrightness(state float64) error {
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
 		newLevel := uint8(state * maxDeviceBrightness)
-		device.notifiedLevel = nil
 		if level > 0 {
 			err = device.setDeviceLevel(newLevel)
 		} else {
 			device.brightness = newLevel // to be applied when device is switched on
 		}
+		device.emitter.reset()
 	} else {
 		err = fmt.Errorf("Unable to apply brightness - get failed.")
 	}
@@ -229,23 +237,24 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 func (device *illuminator) sendLightState() {
 	level, ok := device.node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
 	if ok {
-
-		if device.notifiedLevel != nil && *device.notifiedLevel == level {
-			return
-		}
-
-		if device.brightness == maxDeviceBrightness-1 {
-			device.brightness = 100
-		}
-
-		onOff := level != 0
-		brightness := float64(device.brightness) / maxDeviceBrightness
-
-		device.onOffChannel.SendState(onOff)
-		device.brightnessChannel.SendState(brightness)
-
-		device.notifiedLevel = &level
+		//
+		// Emit the current state, but filter out levels that don't change
+		// within a specified period.
+		//
+		device.emitter.emit(level)
 	}
+}
+
+func (device *illuminator) unconditionalSendLightState(level uint8) {
+	if device.brightness == maxDeviceBrightness-1 {
+		device.brightness = 100
+	}
+
+	onOff := level != 0
+	brightness := float64(device.brightness) / maxDeviceBrightness
+
+	device.onOffChannel.SendState(onOff)
+	device.brightnessChannel.SendState(brightness)
 }
 
 func (device *illuminator) NodeChanged() {
@@ -265,4 +274,42 @@ func (device *illuminator) ValueChanged(v openzwave.Value) {
 	default:
 		device.sendLightState()
 	}
+}
+
+type filteredEmitter struct {
+	last     *uint8
+	lastTime time.Time
+	filter   func(uint8)
+}
+
+func newFilteredEmitter(emitter func(next uint8), minPeriod time.Duration) *filteredEmitter {
+	var self *filteredEmitter
+
+	self = &filteredEmitter{
+		last:     nil,
+		lastTime: time.Now(),
+		filter: func(next uint8) {
+			now := time.Now()
+			if self.last != nil &&
+				*(self.last) == next &&
+				now.Sub(self.lastTime) < minPeriod {
+				return
+			} else {
+				self.last = &next
+				self.lastTime = now
+				emitter(next)
+			}
+		},
+	}
+
+	return self
+
+}
+
+func (self *filteredEmitter) emit(next uint8) {
+	self.filter(next)
+}
+
+func (self *filteredEmitter) reset() {
+	self.last = nil
 }
