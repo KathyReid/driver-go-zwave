@@ -27,7 +27,7 @@ var (
 	License:     "MIT",
 }*/
 
-type zwaveDriver struct {
+type driver struct {
 	config    *ZWaveDriverConfig
 	conn      *ninja.Connection
 	debug     bool
@@ -43,19 +43,19 @@ func defaultConfig() *ZWaveDriverConfig {
 	return &ZWaveDriverConfig{}
 }
 
-func (driver *zwaveDriver) GetOpenZWaveAPI() openzwave.API {
+func (driver *driver) GetOpenZWaveAPI() openzwave.API {
 	return driver.zwaveAPI
 }
 
-func (driver *zwaveDriver) GetNinjaDriver() ninja.Driver {
+func (driver *driver) GetNinjaDriver() ninja.Driver {
 	return driver
 }
 
-func (driver *zwaveDriver) GetNinjaConnection() *ninja.Connection {
+func (driver *driver) GetNinjaConnection() *ninja.Connection {
 	return driver.conn
 }
 
-func newZWaveDriver(debug bool) (*zwaveDriver, error) {
+func newZWaveDriver(debug bool) (*driver, error) {
 
 	conn, err := ninja.Connect(driverName)
 
@@ -63,7 +63,7 @@ func newZWaveDriver(debug bool) (*zwaveDriver, error) {
 		log.Fatalf("Failed to create %s driver: %s", driverName, err)
 	}
 
-	driver := &zwaveDriver{
+	driver := &driver{
 		config:    defaultConfig(),
 		conn:      conn,
 		sendEvent: nil,
@@ -81,7 +81,7 @@ func newZWaveDriver(debug bool) (*zwaveDriver, error) {
 	return driver, nil
 }
 
-func (d *zwaveDriver) Start(config *ZWaveDriverConfig) error {
+func (d *driver) Start(config *ZWaveDriverConfig) error {
 	log.Infof("Driver %s starting with config %v", driverName, config)
 
 	d.config = config
@@ -147,7 +147,7 @@ func (d *zwaveDriver) Start(config *ZWaveDriverConfig) error {
 	return nil
 }
 
-func (d *zwaveDriver) Stop() error {
+func (d *driver) Stop() error {
 	// TODO: propagate shutdown request to ZWave driver and let it take it down
 	log.Infof("Stop received - shutting down")
 	d.exit <- 0
@@ -155,14 +155,14 @@ func (d *zwaveDriver) Stop() error {
 }
 
 // wait until the drivers are ready for us to shutdown.
-func (d *zwaveDriver) Wait() int {
+func (d *driver) Wait() int {
 	return <-d.exit
 }
 
-func (d *zwaveDriver) GetModuleInfo() *model.Module {
+func (d *driver) GetModuleInfo() *model.Module {
 	return info
 }
 
-func (d *zwaveDriver) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
+func (d *driver) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
 	d.sendEvent = sendEvent
 }
