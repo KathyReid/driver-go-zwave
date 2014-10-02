@@ -17,6 +17,7 @@ var (
 	temperature_sensor = openzwave.ValueID{CC.SENSOR_MULTILEVEL, 1, 1}
 	illuminance_sensor = openzwave.ValueID{CC.SENSOR_MULTILEVEL, 1, 3}
 	humidity_sensor    = openzwave.ValueID{CC.SENSOR_MULTILEVEL, 1, 5}
+	battery_sensor     = openzwave.ValueID{CC.BATTERY, 1, 0}
 )
 
 type multisensor struct {
@@ -26,6 +27,7 @@ type multisensor struct {
 	temperatureChannel *channels.TemperatureChannel
 	illuminanceChannel *channels.IlluminanceChannel
 	humidityChannel    *channels.HumidityChannel
+	batteryChannel     *channels.BatteryChannel
 }
 
 func MultiSensorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device {
@@ -85,6 +87,15 @@ func (device *multisensor) NodeAdded() {
 	} else {
 		node.GetValueWithId(humidity_sensor).SetPollingState(true)
 	}
+
+	device.batteryChannel = channels.NewBatteryChannel(device)
+	err = conn.ExportChannel(device, device.batteryChannel, "battery")
+	if err != nil {
+		api.Logger().Infof("failed to export battery channel for %v: %s", node, err)
+		return
+	} else {
+		node.GetValueWithId(battery_sensor).SetPollingState(true)
+	}
 }
 
 func (device *multisensor) NodeChanged() {
@@ -115,6 +126,11 @@ func (device *multisensor) ValueChanged(value openzwave.Value) {
 		valF, ok := value.GetFloat()
 		if ok {
 			device.humidityChannel.SendState(valF)
+		}
+	case battery_sensor: // battery
+		valB, ok := value.GetUint8()
+		if ok {
+			device.batteryChannel.SendState((float64)(valB))
 		}
 	}
 }
