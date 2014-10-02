@@ -152,8 +152,8 @@ func (device *illuminator) SetBrightness(state float64) error {
 			err = device.setDeviceLevel(newLevel)
 		} else {
 			device.brightness = newLevel // to be applied when device is switched on
+			device.emitter.reset()
 		}
-		device.emitter.reset()
 	} else {
 		err = fmt.Errorf("Unable to apply brightness - get failed.")
 	}
@@ -199,6 +199,7 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 				if level != 0 {
 					device.brightness = level
 				}
+				device.emitter.reset()
 				return nil
 			}
 		}
