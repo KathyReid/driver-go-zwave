@@ -18,8 +18,8 @@ var (
 	info = ninja.LoadModuleInfo("./package.json")
 )
 
-type driver struct {
-	config    *config
+type ZDriver struct {
+	config    *Zconfig
 	conn      *ninja.Connection
 	sendEvent func(event string, payload interface{}) error
 	debug     bool
@@ -27,26 +27,26 @@ type driver struct {
 	exit      chan int
 }
 
-type config struct {
+type Zconfig struct {
 }
 
-func defaultConfig() *config {
-	return &config{}
+func defaultConfig() *Zconfig {
+	return &Zconfig{}
 }
 
-func (driver *driver) ZWave() openzwave.API {
+func (driver *ZDriver) ZWave() openzwave.API {
 	return driver.zwaveAPI
 }
 
-func (driver *driver) Ninja() ninja.Driver {
+func (driver *ZDriver) Ninja() ninja.Driver {
 	return driver
 }
 
-func (driver *driver) Connection() *ninja.Connection {
+func (driver *ZDriver) Connection() *ninja.Connection {
 	return driver.conn
 }
 
-func newZWaveDriver(debug bool) (*driver, error) {
+func newZWaveDriver(debug bool) (*ZDriver, error) {
 
 	conn, err := ninja.Connect(driverName)
 
@@ -54,7 +54,7 @@ func newZWaveDriver(debug bool) (*driver, error) {
 		log.Fatalf("Failed to create %s driver: %s", driverName, err)
 	}
 
-	driver := &driver{
+	driver := &ZDriver{
 		config:    defaultConfig(),
 		conn:      conn,
 		sendEvent: nil,
@@ -72,7 +72,7 @@ func newZWaveDriver(debug bool) (*driver, error) {
 	return driver, nil
 }
 
-func (d *driver) Start(config *config) error {
+func (d *ZDriver) Start(config *Zconfig) error {
 	log.Infof("Driver %s starting with config %v", driverName, config)
 
 	d.config = config
@@ -138,21 +138,21 @@ func (d *driver) Start(config *config) error {
 	return nil
 }
 
-func (d *driver) Stop() error {
+func (d *ZDriver) Stop() error {
 	log.Infof("Stop received - shutting down")
 	d.zwaveAPI.Shutdown(0)
 	return nil
 }
 
 // wait until the drivers are ready for us to shutdown.
-func (d *driver) wait() int {
+func (d *ZDriver) wait() int {
 	return <-d.exit
 }
 
-func (d *driver) GetModuleInfo() *model.Module {
+func (d *ZDriver) GetModuleInfo() *model.Module {
 	return info
 }
 
-func (d *driver) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
+func (d *ZDriver) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
 	d.sendEvent = sendEvent
 }
