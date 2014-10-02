@@ -103,21 +103,19 @@ func (device *illuminator) NodeAdded() {
 }
 
 func (device *illuminator) NodeChanged() {
-	select {
-	case device.refresh <- struct{}{}:
-	default:
-		device.sendLightState()
-	}
 }
 
 func (device *illuminator) NodeRemoved() {
 }
 
 func (device *illuminator) ValueChanged(v openzwave.Value) {
-	select {
-	case device.refresh <- struct{}{}:
-	default:
-		device.sendLightState()
+	switch v.Id() {
+	case level_switch:
+		select {
+		case device.refresh <- struct{}{}:
+		default:
+			device.sendLightState()
+		}
 	}
 }
 
