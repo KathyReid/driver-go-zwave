@@ -9,6 +9,6 @@
   <Option name="SaveLogLevel" value="0" />
   <Option name="QueueLogLevel" value="0" />
   <Option name="DumpTrigger" value="0" />
-  <Option name="PollInterval" value="30" />
+  <Option name="PollInterval" value="30000" />
   <Option name="IntervalBetweenPolls" value="false" />
 </Options>
