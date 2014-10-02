@@ -30,6 +30,7 @@ func (device *Device) SetEventHandler(sendEvent func(event string, payload inter
 func (device *Device) Init(driver Driver, node openzwave.Node) {
 	device.Driver = driver
 	device.Node = node
+	device.Info = &model.Device{}
 
 	productId := node.GetProductId()
 	productDescription := node.GetProductDescription()
