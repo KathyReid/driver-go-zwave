@@ -50,6 +50,9 @@ func (device *multisensor) NodeRemoved() {
 func (device *multisensor) ValueChanged(value openzwave.Value) {
 	switch value.Id().CommandClassId {
 	case CC.SENSOR_BINARY:
-		device.motionChannel.SendMotion()
+		flag, ok := value.GetBool()
+		if ok && flag {
+			device.motionChannel.SendMotion()
+		}
 	}
 }
