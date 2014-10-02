@@ -114,7 +114,7 @@ func (device *multisensor) ValueChanged(value openzwave.Value) {
 	case humidity_sensor: // relative humidity
 		valF, ok := value.GetFloat()
 		if ok {
-			device.humidityChannel.SendState(valF / 100)
+			device.humidityChannel.SendState(valF)
 		}
 	}
 }
