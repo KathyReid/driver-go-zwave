@@ -18,6 +18,10 @@ const (
 	maxDelay            = time.Second * 5 // maximum delay for apply calls
 )
 
+var (
+	level_switch = openzwave.ValueID{CC.SWITCH_MULTILEVEL, 1, 0}
+)
+
 type illuminator struct {
 	spi.Device
 
@@ -40,7 +44,7 @@ func IlluminatorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device
 
 	var ok bool
 
-	device.brightness, ok = device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	device.brightness, ok = device.Node.GetValueWithId(level_switch).GetUint8()
 	if !ok || device.brightness == 0 {
 		// we have to reset brightness to 100 since we apply brightness when
 		// we switch it on
@@ -94,7 +98,7 @@ func (device *illuminator) NodeAdded() {
 		api.Logger().Infof("failed to export brightness channel for %v: %s", node, err)
 	}
 
-	device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).SetPollingState(true)
+	device.Node.GetValueWithId(level_switch).SetPollingState(true)
 
 }
 
@@ -128,7 +132,7 @@ func (device *illuminator) SetOnOff(state bool) error {
 }
 
 func (device *illuminator) ToggleOnOff() error {
-	level, ok := device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	level, ok := device.Node.GetValueWithId(level_switch).GetUint8()
 	if !ok {
 		return fmt.Errorf("Unable to determine current state of switch")
 	}
@@ -147,7 +151,7 @@ func (device *illuminator) SetBrightness(state float64) error {
 	} else if state > 1.0 {
 		state = 1.0
 	}
-	level, ok := device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	level, ok := device.Node.GetValueWithId(level_switch).GetUint8()
 	if ok {
 		newLevel := uint8(state * maxDeviceBrightness)
 		if level > 0 {
@@ -169,7 +173,7 @@ func (device *illuminator) SetBrightness(state float64) error {
 //
 func (device *illuminator) setDeviceLevel(level uint8) error {
 
-	val := device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0)
+	val := device.Node.GetValueWithId(level_switch)
 
 	if level >= maxDeviceBrightness {
 		// aeon will reject attempts to set the level to exactly 100
@@ -213,7 +217,7 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 // state of the light back to towards the ninja network
 //
 func (device *illuminator) sendLightState() {
-	level, ok := device.Node.GetValue(CC.SWITCH_MULTILEVEL, 1, 0).GetUint8()
+	level, ok := device.Node.GetValueWithId(level_switch).GetUint8()
 	if ok {
 		//
 		// Emit the current state, but filter out levels that don't change
