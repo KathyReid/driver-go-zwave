@@ -7,7 +7,7 @@ import (
 )
 
 type Driver interface {
-	ZWave()       openzwave.API
-	Ninja()       ninja.Driver
+	ZWave() openzwave.API
+	Ninja() ninja.Driver
 	Connection() *ninja.Connection
 }
