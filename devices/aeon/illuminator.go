@@ -20,6 +20,8 @@ const (
 
 var (
 	level_switch = openzwave.ValueID{CC.SWITCH_MULTILEVEL, 1, 0}
+	energy_meter = openzwave.ValueID{CC.METER, 1, 0}
+	power_meter  = openzwave.ValueID{CC.METER, 1, 8}
 )
 
 type illuminator struct {
@@ -27,6 +29,8 @@ type illuminator struct {
 
 	onOffChannel      *channels.OnOffChannel
 	brightnessChannel *channels.BrightnessChannel
+	powerChannel      *channels.PowerChannel
+	energyChannel     *channels.EnergyChannel
 
 	// brightness is a cache of the current brightness when the device is switched off.
 	// It is updated from the device on a confirmed attempt to adjust the level to a non-zero value
@@ -98,7 +102,21 @@ func (device *illuminator) NodeAdded() {
 		api.Logger().Infof("failed to export brightness channel for %v: %s", node, err)
 	}
 
+	device.powerChannel = channels.NewPowerChannel(device)
+	err = conn.ExportChannel(device, device.powerChannel, "power")
+	if err != nil {
+		api.Logger().Infof("failed to export power channel for %v: %s", node, err)
+	}
+
+	device.energyChannel = channels.NewEnergyChannel(device)
+	err = conn.ExportChannel(device, device.energyChannel, "energy")
+	if err != nil {
+		api.Logger().Infof("failed to export energy channel for %v: %s", node, err)
+	}
+
 	device.Node.GetValueWithId(level_switch).SetPollingState(true)
+	device.Node.GetValueWithId(power_meter).SetPollingState(true)
+	device.Node.GetValueWithId(energy_meter).SetPollingState(true)
 
 }
 
@@ -115,6 +133,17 @@ func (device *illuminator) ValueChanged(v openzwave.Value) {
 		case device.refresh <- struct{}{}:
 		default:
 			device.sendLightState()
+		}
+	case power_meter:
+		readingW, ok := v.GetFloat()
+		if ok {
+			device.powerChannel.SendState(readingW)
+		}
+	case energy_meter:
+		readingKWH, ok := v.GetFloat()
+		if ok {
+			watts := readingKWH * 1000
+			device.energyChannel.SendState(watts)
 		}
 	}
 }
