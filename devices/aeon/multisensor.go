@@ -1,15 +1,21 @@
 package aeon
 
 import (
-	"github.com/ninjasphere/driver-go-zwave/spi"
-	"github.com/ninjasphere/go-ninja/channels"
+	"time"
+
 	"github.com/ninjasphere/go-openzwave"
 	"github.com/ninjasphere/go-openzwave/CC"
+
+	"github.com/ninjasphere/go-ninja/channels"
+
+	"github.com/ninjasphere/driver-go-zwave/spi"
+	"github.com/ninjasphere/driver-go-zwave/utils"
 )
 
 type multisensor struct {
 	spi.Device
 	motionChannel *channels.MotionChannel
+	motionSensor  utils.Emitter
 }
 
 func MultiSensorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device {
@@ -18,6 +24,10 @@ func MultiSensorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device
 	device.Init(driver, node)
 
 	(*device.Info.Signatures)["ninja:thingType"] = "sensor"
+
+	device.motionSensor = utils.Filter(func(next utils.Equatable) {
+		device.motionChannel.SendMotion()
+	}, 1*time.Second)
 	return device
 }
 
@@ -52,7 +62,7 @@ func (device *multisensor) ValueChanged(value openzwave.Value) {
 	case CC.SENSOR_BINARY:
 		flag, ok := value.GetBool()
 		if ok && flag {
-			device.motionChannel.SendMotion()
+			device.motionSensor.Emit(utils.WrapBool(true))
 		}
 	}
 }

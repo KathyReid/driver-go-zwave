@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ninjasphere/go-ninja/channels"
 	"github.com/ninjasphere/go-openzwave"
 	"github.com/ninjasphere/go-openzwave/CC"
 
+	"github.com/ninjasphere/go-ninja/channels"
+
 	"github.com/ninjasphere/driver-go-zwave/spi"
+	"github.com/ninjasphere/driver-go-zwave/utils"
 )
 
 const (
@@ -28,7 +30,7 @@ type illuminator struct {
 
 	refresh chan struct{} // used to wait for confirmation of updates after a level change
 
-	emitter *filteredEmitter
+	emitter utils.Emitter
 }
 
 func IlluminatorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device {
@@ -56,9 +58,9 @@ func IlluminatorFactory(driver spi.Driver, node openzwave.Node) openzwave.Device
 
 	device.refresh = make(chan struct{}, 0)
 
-	device.emitter = newFilteredEmitter(
-		func(level uint8) {
-			device.unconditionalSendLightState(level)
+	device.emitter = utils.Filter(
+		func(level utils.Equatable) {
+			device.unconditionalSendLightState(level.(*utils.WrappedUint8).Unwrap())
 		},
 		30*time.Second)
 
@@ -152,7 +154,7 @@ func (device *illuminator) SetBrightness(state float64) error {
 			err = device.setDeviceLevel(newLevel)
 		} else {
 			device.brightness = newLevel // to be applied when device is switched on
-			device.emitter.reset()
+			device.emitter.Reset()
 		}
 	} else {
 		err = fmt.Errorf("Unable to apply brightness - get failed.")
@@ -199,7 +201,7 @@ func (device *illuminator) setDeviceLevel(level uint8) error {
 				if level != 0 {
 					device.brightness = level
 				}
-				device.emitter.reset()
+				device.emitter.Reset()
 				return nil
 			}
 		}
@@ -217,7 +219,7 @@ func (device *illuminator) sendLightState() {
 		// Emit the current state, but filter out levels that don't change
 		// within a specified period.
 		//
-		device.emitter.emit(level)
+		device.emitter.Emit(utils.WrapUint8(level))
 	}
 }
 

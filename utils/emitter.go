@@ -1,33 +1,38 @@
-package aeon
+package utils
 
 import (
 	"time"
 )
 
+type Emitter interface {
+	Emit(next Equatable)
+	Reset()
+}
+
 type filteredEmitter struct {
-	last     *uint8
+	last     Equatable
 	lastTime time.Time
-	filter   func(uint8)
+	filter   func(Equatable)
 }
 
 //
 // Creates a new, filtered emitter, such that the wrapped emitter is called at
 // most once per minPeriod if the emitted value does not change.
 //
-func newFilteredEmitter(emitter func(next uint8), minPeriod time.Duration) *filteredEmitter {
+func Filter(emitter func(next Equatable), minPeriod time.Duration) Emitter {
 	var self *filteredEmitter
 
 	self = &filteredEmitter{
 		last:     nil,
 		lastTime: time.Now(),
-		filter: func(next uint8) {
+		filter: func(next Equatable) {
 			now := time.Now()
 			if self.last != nil &&
-				*(self.last) == next &&
+				self.last.Equals(next) &&
 				now.Sub(self.lastTime) < minPeriod {
 				return
 			} else {
-				self.last = &next
+				self.last = next
 				self.lastTime = now
 				emitter(next)
 			}
@@ -38,10 +43,10 @@ func newFilteredEmitter(emitter func(next uint8), minPeriod time.Duration) *filt
 
 }
 
-func (self *filteredEmitter) emit(next uint8) {
+func (self *filteredEmitter) Emit(next Equatable) {
 	self.filter(next)
 }
 
-func (self *filteredEmitter) reset() {
+func (self *filteredEmitter) Reset() {
 	self.last = nil
 }
