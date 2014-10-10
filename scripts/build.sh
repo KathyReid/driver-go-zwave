@@ -40,3 +40,10 @@ go get -d -v ./... &&
 make deps &&
 go build -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY} -extldflags -L${GOPATH}/src/github.com/${OWNER}/go-openzwave/openzwave" -o ${BIN_NAME} &&
 mv ${BIN_NAME} ./bin
+
+# building the master branch on ci
+if [ "$BUILDBOX_BRANCH" = "master" ]; then
+	go build -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY}" -tags release -o ./bin/${BIN_NAME}
+else
+	go build -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY}" -o ./bin/${BIN_NAME}
+fi
