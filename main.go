@@ -11,7 +11,7 @@ func main() {
 
 	flagset := flag.NewFlagSet("driver-go-zwave", flag.ContinueOnError)
 	flagset.BoolVar(&debug, "debug", false, "Enable debugging")
-	flagset.Parse(os.Args)
+	flagset.Parse(os.Args[1:])
 
 	zwaveDriver, err := newZWaveDriver(debug)
 	if err != nil {
