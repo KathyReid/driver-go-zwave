@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/ninjasphere/go-ninja/api"
 	"github.com/ninjasphere/go-ninja/logger"
-	"github.com/ninjasphere/go-ninja/model"
+	"github.com/ninjasphere/go-ninja/support"
 
 	"github.com/ninjasphere/go-openzwave"
 	"github.com/ninjasphere/go-openzwave/NT"
@@ -14,17 +16,15 @@ const (
 )
 
 var (
-	log  = logger.GetLogger(driverName)
 	info = ninja.LoadModuleInfo("./package.json")
 )
 
 type ZDriver struct {
-	config    *Zconfig
-	conn      *ninja.Connection
-	sendEvent func(event string, payload interface{}) error
-	debug     bool
-	zwaveAPI  openzwave.API
-	exit      chan int
+	support.DriverSupport
+	config   *Zconfig
+	debug    bool
+	zwaveAPI openzwave.API
+	exit     chan int
 }
 
 type Zconfig struct {
@@ -43,37 +43,33 @@ func (driver *ZDriver) Ninja() ninja.Driver {
 }
 
 func (driver *ZDriver) Connection() *ninja.Connection {
-	return driver.conn
+	return driver.Conn
 }
 
 func newZWaveDriver(debug bool) (*ZDriver, error) {
 
-	conn, err := ninja.Connect(driverName)
-
-	if err != nil {
-		log.Fatalf("Failed to create %s driver: %s", driverName, err)
-	}
-
 	driver := &ZDriver{
-		config:    defaultConfig(),
-		conn:      conn,
-		sendEvent: nil,
-		debug:     debug,
-		zwaveAPI:  nil,
-		exit:      make(chan int, 0),
+		config:   defaultConfig(),
+		debug:    debug,
+		zwaveAPI: nil,
+		exit:     make(chan int, 0),
 	}
 
-	err = conn.ExportDriver(driver)
-
+	err := driver.Init(info)
 	if err != nil {
-		log.Fatalf("Failed to export %s driver: %s", driverName, err)
+		return nil, err
+	}
+
+	err = driver.Export(driver)
+	if err != nil {
+		return nil, err
 	}
 
 	return driver, nil
 }
 
 func (d *ZDriver) Start(config *Zconfig) error {
-	log.Infof("Driver %s starting with config %v", driverName, config)
+	d.Log.Infof("Driver %s starting with config %v", driverName, config)
 
 	d.config = config
 
@@ -114,7 +110,7 @@ func (d *ZDriver) Start(config *Zconfig) error {
 
 	configurator := openzwave.
 		BuildAPI("/usr/local/etc/openzwave", ".", "").
-		SetLogger(log).
+		SetLogger(logger.GetLogger(fmt.Sprintf("%s.backend", d.Info.ID))).
 		SetNotificationCallback(notificationCallback).
 		SetDeviceFactory(zwaveDeviceFactory)
 
@@ -133,13 +129,13 @@ func (d *ZDriver) Start(config *Zconfig) error {
 		d.exit <- configurator.Run()
 	}()
 
-	d.sendEvent("config", config)
+	d.SendEvent("config", config)
 
 	return nil
 }
 
 func (d *ZDriver) Stop() error {
-	log.Infof("Stop received - shutting down")
+	d.Log.Infof("Stop received - shutting down")
 	d.zwaveAPI.Shutdown(0)
 	return nil
 }
@@ -147,12 +143,4 @@ func (d *ZDriver) Stop() error {
 // wait until the drivers are ready for us to shutdown.
 func (d *ZDriver) wait() int {
 	return <-d.exit
-}
-
-func (d *ZDriver) GetModuleInfo() *model.Module {
-	return info
-}
-
-func (d *ZDriver) SetEventHandler(sendEvent func(event string, payload interface{}) error) {
-	d.sendEvent = sendEvent
 }
