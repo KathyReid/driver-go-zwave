@@ -20,33 +20,33 @@ type filteredEmitter struct {
 // most once per minPeriod if the emitted value does not change.
 //
 func Filter(emitter func(next Equatable), minPeriod time.Duration) Emitter {
-	var self *filteredEmitter
+	var f *filteredEmitter
 
-	self = &filteredEmitter{
+	f = &filteredEmitter{
 		last:     nil,
 		lastTime: time.Now(),
 		filter: func(next Equatable) {
 			now := time.Now()
-			if self.last != nil &&
-				self.last.Equals(next) &&
-				now.Sub(self.lastTime) < minPeriod {
+			if f.last != nil &&
+				f.last.Equals(next) &&
+				now.Sub(f.lastTime) < minPeriod {
 				return
 			} else {
-				self.last = next
-				self.lastTime = now
+				f.last = next
+				f.lastTime = now
 				emitter(next)
 			}
 		},
 	}
 
-	return self
+	return f
 
 }
 
-func (self *filteredEmitter) Emit(next Equatable) {
-	self.filter(next)
+func (f *filteredEmitter) Emit(next Equatable) {
+	f.filter(next)
 }
 
-func (self *filteredEmitter) Reset() {
-	self.last = nil
+func (f *filteredEmitter) Reset() {
+	f.last = nil
 }
