@@ -1,1 +1,2 @@
-nservice -q driver-go-zwave start
+/opt/ninjablocks/bin/nservice -q driver-go-zwave stop
+/opt/ninjablocks/bin/nservice -q driver-go-zwave start
