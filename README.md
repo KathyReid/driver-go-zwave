@@ -10,3 +10,7 @@ To build the linux/arm target, execute the build natively on a linux/arm host.
 
 ##Date
 2014-09-25 14:58
+
+# Licensing
+
+driver-go-zwave is licensed under the MIT License. See LICENSE for the full license text.
